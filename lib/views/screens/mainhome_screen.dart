@@ -34,6 +34,7 @@ class _MainhomeScreenState extends State<MainhomeScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         body: IndexedStack(
           index: _index,
           children: _pages,

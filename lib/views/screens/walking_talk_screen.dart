@@ -21,28 +21,27 @@ class _WalkingTalkScreenState extends State<WalkingTalkScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(43.h),
-          child: WithWalkAppbar(
-            titlename: "길건너 친구들",
-            isBack: false,
-            isColored: current.app,
-            fontColor: current.fontThird,
-          ),
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(43.h),
+        child: WithWalkAppbar(
+          titlename: "길건너 친구들",
+          isBack: false,
+          isColored: current.app,
+          fontColor: current.fontThird,
         ),
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: Image.asset(
-                "assets/images/bgs/background.png",
-                fit: BoxFit.cover,
-              ),
+      ),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/bgs/background.png",
+              fit: BoxFit.cover,
             ),
-            Center(child: Column()),
-          ],
-        ),
+          ),
+          Center(child: Column()),
+        ],
       ),
     );
   }

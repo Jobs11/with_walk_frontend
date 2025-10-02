@@ -1,26 +1,71 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:with_walk/api/model/member.dart';
+import 'package:with_walk/api/service/memberservice.dart';
+import 'package:with_walk/functions/data.dart';
 
-Future<String?> profileChange(BuildContext context) {
+Future<String?> profileChange(BuildContext context, {required String title}) {
   return showDialog<String>(
     context: context,
     barrierDismissible: true,
     builder: (_) => Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
-      child: _ProfileChangeDialog(),
+      child: _ProfileChangeDialog(title: title), // 👈 값 전달
     ),
   );
 }
 
 class _ProfileChangeDialog extends StatefulWidget {
-  const _ProfileChangeDialog();
+  final String title; // 👈 전달받을 값
+
+  const _ProfileChangeDialog({required this.title});
 
   @override
   State<_ProfileChangeDialog> createState() => __ProfileChangeDialogState();
 }
 
 class __ProfileChangeDialogState extends State<_ProfileChangeDialog> {
+  final m = CurrentUser.instance.member;
+
+  Future<void> _update(String img) async {
+    final member = Member(
+      mId: m!.mId,
+      mPassword: m!.mPassword,
+      mName: m!.mName,
+      mNickname: m!.mNickname,
+      mEmail: m!.mEmail,
+      mPaint: img,
+    );
+
+    try {
+      await Memberservice.updateProfile(member); // 서버는 200/201만 주면 OK
+
+      CurrentUser.instance.member = member;
+
+      if (!mounted) return;
+      Fluttertoast.showToast(
+        msg: "프로필 사진 변경 완료!",
+        toastLength: Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
+        gravity: ToastGravity.BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
+        backgroundColor: const Color(0xAA000000), // 반투명 검정
+        textColor: Colors.white,
+        fontSize: 16.0.sp,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Fluttertoast.showToast(
+        msg: "프로필 사진 변경 실패! $e",
+        toastLength: Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
+        gravity: ToastGravity.BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
+        backgroundColor: const Color(0xAA000000), // 반투명 검정
+        textColor: Colors.white,
+        fontSize: 16.0.sp,
+      );
+    } finally {}
+  }
+
   @override
   Widget build(BuildContext context) {
     const cardBg = Color(0xFFFFF8E7);
@@ -138,6 +183,9 @@ class __ProfileChangeDialogState extends State<_ProfileChangeDialog> {
   GestureDetector clickProfile(String img) {
     return GestureDetector(
       onTap: () {
+        if (widget.title == '프로필수정') {
+          _update(img);
+        }
         Navigator.pop(context, img);
       },
       child: Image.asset(img, width: 100.w, height: 100.h),

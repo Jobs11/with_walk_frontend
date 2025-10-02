@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/api/service/memberservice.dart';
 import 'package:with_walk/functions/data.dart';
+import 'package:with_walk/functions/widegt_fn.dart';
 import 'package:with_walk/views/screens/mainhome_screen.dart';
 import 'package:with_walk/views/screens/membership_screen.dart';
 import 'package:with_walk/theme/colors.dart';
@@ -54,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } catch (e) {
       Fluttertoast.showToast(
-        msg: "로그인 실패! $e",
+        msg: "아이디 혹은 패스워드가 틀렸습니다. ",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         backgroundColor: const Color(0xAA000000),
@@ -68,6 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
             Positioned.fill(
@@ -112,17 +114,20 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget notLogin() {
     return Column(
       children: [
-        GestureDetector(
-          onTap: () {
-            setState(() {
-              isLogin = true;
-            });
-          },
-          child: colorbtn('로그인', current.btn, current.btnText, current.btn),
-        ),
+        colorbtn('로그인', current.btn, current.btnText, current.btn, 200, 36, () {
+          setState(() {
+            isLogin = true;
+          });
+        }),
         SizedBox(height: 10.h),
-        GestureDetector(
-          onTap: () {
+        colorbtn(
+          '회원가입',
+          current.bg,
+          current.btn,
+          current.btnBorder,
+          200,
+          36,
+          () {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -130,7 +135,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
           },
-          child: colorbtn('회원가입', current.bg, current.btn, current.btnBorder),
         ),
         SizedBox(height: 10.h),
       ],
@@ -140,90 +144,29 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget yesLogin() {
     return Column(
       children: [
-        inputdata("ID", idController),
+        inputdata("ID", idController, current, 200),
         SizedBox(height: 4.h),
-        inputdata("PASSWORD", passwordController),
+        inputdata("PASSWORD", passwordController, current, 200),
         SizedBox(height: 12.h),
-        GestureDetector(
-          onTap: () {
-            if (idController.text.isEmpty && passwordController.text.isEmpty) {
-              Fluttertoast.showToast(
-                msg: "처음 화면으로 돌아갑니다.",
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.BOTTOM,
-                backgroundColor: const Color(0xAA000000),
-                textColor: Colors.white,
-                fontSize: 16.0.sp,
-              );
-              setState(() {
-                isLogin = false;
-              });
-            } else if (idController.text.isNotEmpty &&
-                passwordController.text.isNotEmpty) {
-              _login();
-            }
-          },
-          child: colorbtn('로그인', current.btn, current.btnText, current.btn),
-        ),
-      ],
-    );
-  }
-
-  Widget colorbtn(
-    String title,
-    Color btncolor,
-    Color fontcolor,
-    Color borcolor,
-  ) {
-    return Container(
-      width: 200.w,
-      height: 36.h,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20.r),
-        color: btncolor,
-        border: Border.all(color: borcolor),
-      ),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16.sp,
-          color: fontcolor,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  Widget inputdata(String title, TextEditingController controller) {
-    return Container(
-      width: 200.w,
-      height: 36.h,
-      padding: EdgeInsets.symmetric(horizontal: 6.w),
-      decoration: BoxDecoration(
-        color: current.bg,
-        border: Border.all(color: current.accent),
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          counterText: '',
-          border: InputBorder.none, // 테두리 제거 (BoxDecoration에서 그림)
-          hintText: title, // 플레이스홀더
-          hintStyle: TextStyle(
-            color: current.fontPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) {
-            return '값을 입력해주세요.';
+        colorbtn('로그인', current.btn, current.btnText, current.btn, 200, 36, () {
+          if (idController.text.isEmpty && passwordController.text.isEmpty) {
+            Fluttertoast.showToast(
+              msg: "처음 화면으로 돌아갑니다.",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: const Color(0xAA000000),
+              textColor: Colors.white,
+              fontSize: 16.0.sp,
+            );
+            setState(() {
+              isLogin = false;
+            });
+          } else if (idController.text.isNotEmpty &&
+              passwordController.text.isNotEmpty) {
+            _login();
           }
-          return null; // 검증 통과
-        },
-        style: TextStyle(fontSize: 16.sp),
-      ),
+        }),
+      ],
     );
   }
 }
