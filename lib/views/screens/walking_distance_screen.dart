@@ -128,11 +128,8 @@ class _WalkingDistanceScreenState extends State<WalkingDistanceScreen> {
       _line = null;
     }
 
-    final route = await _naver.fetchDrivingRoute(
-      start: _start!,
-      goal: _goal!,
-      option: 'traoptimal',
-    );
+    // ✅ 여러 옵션 중 최단 거리 경로 검색
+    final route = await _naver.fetchShortestRoute(start: _start!, goal: _goal!);
 
     if (route == null) {
       _distanceM = null;
@@ -153,12 +150,20 @@ class _WalkingDistanceScreenState extends State<WalkingDistanceScreen> {
 
     _distanceM = route.distanceM.toDouble();
     debugPrint(
-      '✅ route ok: distance=$_distanceM m, pathLen=${route.path.length}',
+      '✅ route ok: option=${route.option}, distance=$_distanceM m, pathLen=${route.path.length}',
     );
     if (mounted) setState(() {});
   }
 
   Future<void> _resetMarks() async {
+    // ✅ 이미 모든 값이 null이면 스낵바 표시
+    if (_start == null && _goal == null && _distanceM == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('초기화할 데이터가 없습니다.')));
+      return;
+    }
+
     final c = await _c();
 
     _start = null;
@@ -166,19 +171,31 @@ class _WalkingDistanceScreenState extends State<WalkingDistanceScreen> {
     _distanceM = null;
 
     if (c != null) {
-      if (_startMarker != null) await c.deleteOverlay(_startMarker!.info);
-      if (_goalMarker != null) await c.deleteOverlay(_goalMarker!.info);
-      if (_line != null) await c.deleteOverlay(_line!.info);
+      if (_startMarker != null) {
+        await c.deleteOverlay(_startMarker!.info);
+        _startMarker = null;
+      }
+      if (_goalMarker != null) {
+        await c.deleteOverlay(_goalMarker!.info);
+        _goalMarker = null;
+      }
+      if (_line != null) {
+        await c.deleteOverlay(_line!.info);
+        _line = null;
+      }
     }
-
-    _startMarker = null;
-    _goalMarker = null;
-    _line = null;
 
     startController.text = '';
     arriveController.text = '';
 
     if (mounted) setState(() {});
+
+    // ✅ 초기화 완료 알림
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('초기화되었습니다.')));
+    }
   }
 
   // ✅ NEW: 현재 위치 가져오기
@@ -267,168 +284,174 @@ class _WalkingDistanceScreenState extends State<WalkingDistanceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(43.h),
-        child: WithWalkAppbar(
-          titlename: "발걸음",
-          isBack: false,
-          isColored: current.app,
-          fontColor: current.fontThird,
-        ),
-      ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              "assets/images/bgs/background.png",
-              fit: BoxFit.cover,
-            ),
+    return GestureDetector(
+      onTap: () {
+        // ✅ 화면 어디든 터치하면 포커스 해제 (리스트 닫기)
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(43.h),
+          child: WithWalkAppbar(
+            titlename: "발걸음",
+            isBack: false,
+            isColored: current.app,
+            fontColor: current.fontThird,
           ),
-          Center(
-            child: SizedBox(
-              width: double.infinity,
-              height: 580.h,
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    SizedBox(height: 20.h),
-                    SizedBox(
-                      width: 300.w,
-                      height: 300.h,
-                      child: NaverMap(
-                        options: NaverMapViewOptions(
-                          initialCameraPosition: NCameraPosition(
-                            target: _seoul,
-                            zoom: 14,
-                          ),
-                          contentPadding: EdgeInsets.zero,
-                          mapType: NMapType.basic,
-                          liteModeEnable: false,
-                          indoorEnable: false,
-                          logoClickEnable: false,
-                          rotationGesturesEnable: true,
-                          scrollGesturesEnable: true,
-                          tiltGesturesEnable: true,
-                          zoomGesturesEnable: true,
-                        ),
-                        onMapReady: (c) {
-                          _controller = c;
-                          if (!_mapReady.isCompleted) _mapReady.complete(c);
-                          _isMapReady = true;
-                          debugPrint('✅ NaverMap ready');
-                        },
-                        onMapTapped: (pt, latLng) async {
-                          final focus = FocusScope.of(context);
-                          if (focus.hasPrimaryFocus) focus.unfocus();
-
-                          if (_start == null) {
-                            await _setStart(latLng);
-                            final addr = await _naver.reverseGeocodeToAddress(
-                              latLng,
-                            );
-                            if (addr != null) {
-                              setState(() => startController.text = addr);
-                            }
-                            await _flyTo(latLng);
-                          } else if (_goal == null) {
-                            await _setGoal(latLng);
-                            final addr = await _naver.reverseGeocodeToAddress(
-                              latLng,
-                            );
-                            if (addr != null) {
-                              setState(() => arriveController.text = addr);
-                            }
-                            await _flyTo(latLng);
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('리셋 후 다시 지정하세요.')),
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                    SizedBox(height: 10.h),
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(horizontal: 30.w),
-                      child: Column(
-                        children: [
-                          _inputRow(
-                            '출발',
-                            startController,
-                            showLocationBtn: true,
-                          ),
-                          SizedBox(height: 8.h),
-                          _inputRow('도착', arriveController),
-                          SizedBox(height: 8.h),
-
-                          if (_distanceM != null)
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 10.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: current.bg,
-                                border: Border.all(color: current.accent),
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.route),
-                                  SizedBox(width: 8.w),
-                                  Text(
-                                    '경로 거리: ${_fmtMeters(_distanceM!)}',
-                                    style: TextStyle(
-                                      color: current.fontThird,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14.sp,
-                                    ),
-                                  ),
-                                ],
-                              ),
+        ),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                "assets/images/bgs/background.png",
+                fit: BoxFit.cover,
+              ),
+            ),
+            Center(
+              child: SizedBox(
+                width: double.infinity,
+                height: 580.h,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SizedBox(height: 20.h),
+                      SizedBox(
+                        width: 300.w,
+                        height: 300.h,
+                        child: NaverMap(
+                          options: NaverMapViewOptions(
+                            initialCameraPosition: NCameraPosition(
+                              target: _seoul,
+                              zoom: 14,
                             ),
-
-                          SizedBox(height: 8.h),
-                          colorbtn(
-                            '길찾기',
-                            current.bg,
-                            current.fontThird,
-                            current.accent,
-                            double.infinity,
-                            36,
-                            () {
-                              _makeRoadRoute();
-                            },
+                            contentPadding: EdgeInsets.zero,
+                            mapType: NMapType.basic,
+                            liteModeEnable: false,
+                            indoorEnable: false,
+                            logoClickEnable: false,
+                            rotationGesturesEnable: true,
+                            scrollGesturesEnable: true,
+                            tiltGesturesEnable: true,
+                            zoomGesturesEnable: true,
                           ),
-                        ],
+                          onMapReady: (c) {
+                            _controller = c;
+                            if (!_mapReady.isCompleted) _mapReady.complete(c);
+                            _isMapReady = true;
+                            debugPrint('✅ NaverMap ready');
+                          },
+                          onMapTapped: (pt, latLng) async {
+                            final focus = FocusScope.of(context);
+                            if (focus.hasPrimaryFocus) focus.unfocus();
+
+                            if (_start == null) {
+                              await _setStart(latLng);
+                              final addr = await _naver.reverseGeocodeToAddress(
+                                latLng,
+                              );
+                              if (addr != null) {
+                                setState(() => startController.text = addr);
+                              }
+                              await _flyTo(latLng);
+                            } else if (_goal == null) {
+                              await _setGoal(latLng);
+                              final addr = await _naver.reverseGeocodeToAddress(
+                                latLng,
+                              );
+                              if (addr != null) {
+                                setState(() => arriveController.text = addr);
+                              }
+                              await _flyTo(latLng);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('리셋 후 다시 지정하세요.')),
+                              );
+                            }
+                          },
+                        ),
                       ),
-                    ),
-                  ],
+                      SizedBox(height: 10.h),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(horizontal: 30.w),
+                        child: Column(
+                          children: [
+                            _inputRow(
+                              '출발',
+                              startController,
+                              showLocationBtn: true,
+                            ),
+                            SizedBox(height: 8.h),
+                            _inputRow('도착', arriveController),
+                            SizedBox(height: 8.h),
+
+                            if (_distanceM != null)
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 10.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: current.bg,
+                                  border: Border.all(color: current.accent),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.route),
+                                    SizedBox(width: 8.w),
+                                    Text(
+                                      '경로 거리: ${_fmtMeters(_distanceM!)}',
+                                      style: TextStyle(
+                                        color: current.fontThird,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14.sp,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                            SizedBox(height: 8.h),
+                            colorbtn(
+                              '길찾기',
+                              current.bg,
+                              current.fontThird,
+                              current.accent,
+                              double.infinity,
+                              36,
+                              () {
+                                _makeRoadRoute();
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton.extended(
-            heroTag: 'reset',
-            onPressed: _resetMarks,
-            label: Text(
-              '리셋',
-              style: TextStyle(color: current.bg, fontSize: 16.sp),
+          ],
+        ),
+        floatingActionButton: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FloatingActionButton.extended(
+              heroTag: 'reset',
+              onPressed: _resetMarks,
+              label: Text(
+                '리셋',
+                style: TextStyle(color: current.bg, fontSize: 16.sp),
+              ),
+              icon: Icon(Icons.refresh, color: current.bg),
+              backgroundColor: current.accent,
             ),
-            icon: Icon(Icons.refresh, color: current.bg),
-            backgroundColor: current.accent,
-          ),
-        ],
+          ],
+        ),
       ),
-    );
+    ); // ✅ GestureDetector 닫기
   }
 
   // ✅ UPDATED: showLocationBtn 파라미터 추가
@@ -541,11 +564,11 @@ class _WalkingDistanceScreenState extends State<WalkingDistanceScreen> {
           ),
         ),
         onSelected: (item) async {
-          // ✅ 먼저 포커스 해제 (리스트 즉시 닫기)
-          FocusScope.of(context).unfocus();
+          // ✅ 1. 먼저 텍스트 업데이트 (setState 없이!)
+          ctrl.text = item.title;
 
-          // ✅ 텍스트 업데이트
-          setState(() => ctrl.text = item.title);
+          // ✅ 2. 포커스 해제 (리스트 즉시 닫기)
+          FocusScope.of(context).unfocus();
 
           final addr = item.roadAddr.isNotEmpty
               ? item.roadAddr

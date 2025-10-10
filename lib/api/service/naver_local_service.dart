@@ -1,4 +1,4 @@
-// lib/views/screens/walking_distance_screen.dart
+// lib/api/service/naver_local_service.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -16,10 +16,10 @@ class NaverLocalService {
     required this.geocodeKey,
   });
 
-  final String searchClientId; // NAVER Developers
-  final String searchClientSecret; // NAVER Developers
-  final String geocodeKeyId; // NCP API GW
-  final String geocodeKey; // NCP API GW
+  final String searchClientId;
+  final String searchClientSecret;
+  final String geocodeKeyId;
+  final String geocodeKey;
 
   /// 키워드 장소 검색 (상호명 등)
   Future<List<PlaceResult>> searchPlaces(String query) async {
@@ -35,8 +35,8 @@ class NaverLocalService {
         );
 
     final headers = {
-      'X-Naver-Client-Id': searchClientId, // ✅ Developers 키
-      'X-Naver-Client-Secret': searchClientSecret, // ✅ Developers 키
+      'X-Naver-Client-Id': searchClientId,
+      'X-Naver-Client-Secret': searchClientSecret,
     };
 
     http.Response res;
@@ -51,7 +51,6 @@ class NaverLocalService {
     debugPrint('🔎 local search body=${utf8.decode(res.bodyBytes)}');
 
     if (res.statusCode != 200) {
-      // 401: 키 잘못/권한 없음, 429: 쿼터 초과, 403: 정책 위반 등
       return [];
     }
 
@@ -96,8 +95,8 @@ class NaverLocalService {
     if (addrs.isEmpty) return null;
 
     final first = addrs.first as Map<String, dynamic>;
-    final x = double.tryParse(first['x']?.toString() ?? ''); // lon
-    final y = double.tryParse(first['y']?.toString() ?? ''); // lat
+    final x = double.tryParse(first['x']?.toString() ?? '');
+    final y = double.tryParse(first['y']?.toString() ?? '');
     if (x == null || y == null) return null;
 
     return NLatLng(y, x);
@@ -109,14 +108,13 @@ class NaverLocalService {
   Future<({List<NLatLng> path, int distanceM})?> fetchDrivingRoute({
     required NLatLng start,
     required NLatLng goal,
-    String option = 'traoptimal', // trafast | traoptimal | tracomfort ...
-    bool useV15 = false, // 경유지 많이 쓰면 true
+    String option = 'traoptimal',
+    bool useV15 = false,
   }) async {
     final base = useV15
         ? 'https://maps.apigw.ntruss.com/map-direction-15/v1/driving'
         : 'https://maps.apigw.ntruss.com/map-direction/v1/driving';
 
-    // ⚠️ Directions 쿼리 파라미터는 "경도,위도" 순서!
     final uri = Uri.parse(
       '$base?start=${start.longitude},${start.latitude}'
       '&goal=${goal.longitude},${goal.latitude}'
@@ -134,7 +132,7 @@ class NaverLocalService {
     if (res.statusCode != 200) return null;
 
     final json = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
-    final routes = (json['route'] as Map?)?['traoptimal'] as List?;
+    final routes = (json['route'] as Map?)?[option] as List?;
     if (routes == null || routes.isEmpty) return null;
 
     final first = routes.first as Map<String, dynamic>;
@@ -147,7 +145,7 @@ class NaverLocalService {
       if (p.length >= 2) {
         final lng = (p[0] as num).toDouble();
         final lat = (p[1] as num).toDouble();
-        coords.add(NLatLng(lat, lng)); // [lng,lat] → (lat,lng)
+        coords.add(NLatLng(lat, lng));
       }
     }
 
@@ -155,19 +153,50 @@ class NaverLocalService {
     return (path: coords, distanceM: distanceM);
   }
 
+  /// ✅ NEW: 여러 옵션 중 가장 짧은 거리 경로 선택
+  Future<({List<NLatLng> path, int distanceM, String option})?>
+  fetchShortestRoute({required NLatLng start, required NLatLng goal}) async {
+    final options = ['trafast', 'traoptimal', 'tracomfort'];
+
+    ({List<NLatLng> path, int distanceM, String option})? shortest;
+
+    for (final opt in options) {
+      debugPrint('🔍 경로 검색 중: $opt');
+
+      final route = await fetchDrivingRoute(
+        start: start,
+        goal: goal,
+        option: opt,
+      );
+
+      if (route != null) {
+        debugPrint('  ↳ $opt: ${route.distanceM}m');
+
+        if (shortest == null || route.distanceM < shortest.distanceM) {
+          shortest = (
+            path: route.path,
+            distanceM: route.distanceM,
+            option: opt,
+          );
+        }
+      }
+    }
+
+    if (shortest != null) {
+      debugPrint('✅ 최단 경로: ${shortest.option} (${shortest.distanceM}m)');
+    }
+
+    return shortest;
+  }
+
   /// ✅ 좌표 → 주소(도로명 우선, 없으면 지번)
   Future<String?> reverseGeocodeToAddress(NLatLng p) async {
-    // coords는 "경도,위도" 순서!
-    final uri = Uri.https(
-      'maps.apigw.ntruss.com',
-      '/map-reversegeocode/v2/gc',
-      {
-        'coords': '${p.longitude},${p.latitude}',
-        // roadaddr(도로명) → addr(지번) 순으로 시도
-        'orders': 'roadaddr,addr',
-        'output': 'json',
-      },
-    );
+    final uri =
+        Uri.https('maps.apigw.ntruss.com', '/map-reversegeocode/v2/gc', {
+          'coords': '${p.longitude},${p.latitude}',
+          'orders': 'roadaddr,addr',
+          'output': 'json',
+        });
 
     final res = await http.get(
       uri,
@@ -183,13 +212,12 @@ class NaverLocalService {
     final results = (body['results'] as List?) ?? const [];
     if (results.isEmpty) return null;
 
-    // roadaddr가 있으면 그걸, 없으면 addr 사용
     String? pretty;
     for (final r in results) {
-      final name = r['name'] as String?; // 'roadaddr' or 'addr'
+      final name = r['name'] as String?;
       final region = (r['region'] as Map?)?['area3']?['name'] ?? '';
       final land = (r['land'] as Map?) ?? {};
-      final road = land['name'] ?? ''; // 도로명
+      final road = land['name'] ?? '';
       final number = [
         land['number1'] ?? '',
         if ((land['number2'] ?? '').toString().isNotEmpty)
@@ -209,7 +237,6 @@ class NaverLocalService {
         final ri = (r['region'] as Map?)?['area4']?['name'] ?? '';
         final area = [dong, if (ri.isNotEmpty) ri].join(' ');
         pretty = '$area $parcel'.trim();
-        // roadaddr가 이미 없었다면 이걸 사용
       }
     }
     return pretty;
