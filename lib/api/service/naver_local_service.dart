@@ -154,4 +154,64 @@ class NaverLocalService {
     final distanceM = (summary['distance'] as num?)?.toInt() ?? 0;
     return (path: coords, distanceM: distanceM);
   }
+
+  /// ✅ 좌표 → 주소(도로명 우선, 없으면 지번)
+  Future<String?> reverseGeocodeToAddress(NLatLng p) async {
+    // coords는 "경도,위도" 순서!
+    final uri = Uri.https(
+      'maps.apigw.ntruss.com',
+      '/map-reversegeocode/v2/gc',
+      {
+        'coords': '${p.longitude},${p.latitude}',
+        // roadaddr(도로명) → addr(지번) 순으로 시도
+        'orders': 'roadaddr,addr',
+        'output': 'json',
+      },
+    );
+
+    final res = await http.get(
+      uri,
+      headers: {
+        'X-NCP-APIGW-API-KEY-ID': geocodeKeyId,
+        'X-NCP-APIGW-API-KEY': geocodeKey,
+      },
+    );
+
+    if (res.statusCode != 200) return null;
+
+    final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    final results = (body['results'] as List?) ?? const [];
+    if (results.isEmpty) return null;
+
+    // roadaddr가 있으면 그걸, 없으면 addr 사용
+    String? pretty;
+    for (final r in results) {
+      final name = r['name'] as String?; // 'roadaddr' or 'addr'
+      final region = (r['region'] as Map?)?['area3']?['name'] ?? '';
+      final land = (r['land'] as Map?) ?? {};
+      final road = land['name'] ?? ''; // 도로명
+      final number = [
+        land['number1'] ?? '',
+        if ((land['number2'] ?? '').toString().isNotEmpty)
+          '-${land['number2']}',
+      ].join();
+      if (name == 'roadaddr' && road.toString().isNotEmpty) {
+        pretty = '$region $road $number'.trim();
+        break;
+      }
+      if (name == 'addr') {
+        final parcel = [
+          land['number1'] ?? '',
+          if ((land['number2'] ?? '').toString().isNotEmpty)
+            '-${land['number2']}',
+        ].join();
+        final dong = region.toString();
+        final ri = (r['region'] as Map?)?['area4']?['name'] ?? '';
+        final area = [dong, if (ri.isNotEmpty) ri].join(' ');
+        pretty = '$area $parcel'.trim();
+        // roadaddr가 이미 없었다면 이걸 사용
+      }
+    }
+    return pretty;
+  }
 }

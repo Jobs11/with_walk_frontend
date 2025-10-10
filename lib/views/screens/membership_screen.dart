@@ -354,12 +354,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return '값을 입력해주세요.';
-                    }
-                    return null; // 검증 통과
-                  },
+
                   style: TextStyle(fontSize: 16.sp),
                 ),
               ),

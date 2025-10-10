@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:with_walk/api/model/member.dart';
+import 'package:with_walk/api/service/memberservice.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/functions/widegt_fn.dart';
 import 'package:with_walk/theme/colors.dart';
@@ -25,19 +26,59 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
   String? selectedValue;
   bool showDropdown = false; // 드롭다운 표시 여부
   String? paint;
-  bool isoverlap = false;
-  Member member = CurrentUser.instance.member!;
+  Member m = CurrentUser.instance.member!;
   String? error;
   bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    paint = member.mPaint!;
-    nameController.text = member.mName;
-    nicknameController.text = member.mNickname;
-    emailController.text = member.mEmail.split('@')[0];
-    selectedValue = member.mEmail.split('@')[1];
+    paint = m.mPaint!;
+    nameController.text = m.mName;
+    nicknameController.text = m.mNickname;
+    emailController.text = m.mEmail.split('@')[0];
+    selectedValue = m.mEmail.split('@')[1];
+  }
+
+  Future<void> _update() async {
+    final member = Member(
+      mName: nameController.text.trim(),
+      mNickname: nicknameController.text.trim(),
+      mEmail: '${emailController.text.trim()}@$selectedValue',
+      mId: m.mId,
+      mPassword: passwordController.text.trim(),
+      mPaint: m.mPaint,
+    );
+
+    try {
+      await Memberservice.updateMember(member);
+      // 서버는 200/201만 주면 OK
+
+      CurrentUser.instance.member = member;
+
+      if (!mounted) return;
+      Fluttertoast.showToast(
+        msg: "프로필 정보 변경 완료!",
+        toastLength: Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
+        gravity: ToastGravity.BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
+        backgroundColor: const Color(0xAA000000), // 반투명 검정
+        textColor: Colors.white,
+        fontSize: 16.0.sp,
+      );
+
+      // 성공 시에만 페이지 이동
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      Fluttertoast.showToast(
+        msg: "프로필 정보 변경 실패! $e",
+        toastLength: Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
+        gravity: ToastGravity.BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
+        backgroundColor: const Color(0xAA000000), // 반투명 검정
+        textColor: Colors.white,
+        fontSize: 16.0.sp,
+      );
+    } finally {}
   }
 
   @override
@@ -48,7 +89,7 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(43.h),
           child: WithWalkAppbar(
-            titlename: "회원가입",
+            titlename: "프로필 수정",
             isBack: false,
             isColored: widget.current.app,
             fontColor: widget.current.fontThird,
@@ -94,34 +135,24 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
 
                   SizedBox(height: 24.h),
                   colorbtn(
-                    "회원가입",
+                    "수정하기",
                     widget.current.bg,
                     widget.current.btn,
                     widget.current.btn,
                     200,
                     36,
                     () {
-                      if (isoverlap == true) {
-                        if (passwordController.text.isNotEmpty &&
-                            nameController.text.isNotEmpty &&
-                            nicknameController.text.isNotEmpty &&
-                            emailController.text.isNotEmpty &&
-                            selectedValue != null) {
-                          if (passwordController.text ==
-                              conpasswordController.text) {
-                          } else {
-                            Fluttertoast.showToast(
-                              msg: "비밀번호가 서로 다릅니다.",
-                              toastLength: Toast.LENGTH_SHORT,
-                              gravity: ToastGravity.BOTTOM,
-                              backgroundColor: const Color(0xAA000000),
-                              textColor: Colors.white,
-                              fontSize: 16.0.sp,
-                            );
-                          }
+                      if (passwordController.text.isNotEmpty &&
+                          nameController.text.isNotEmpty &&
+                          nicknameController.text.isNotEmpty &&
+                          emailController.text.isNotEmpty &&
+                          selectedValue != null) {
+                        if (passwordController.text ==
+                            conpasswordController.text) {
+                          _update();
                         } else {
                           Fluttertoast.showToast(
-                            msg: "정보를 다 입력해주시길 바랍니다.",
+                            msg: "비밀번호가 서로 다릅니다.",
                             toastLength: Toast.LENGTH_SHORT,
                             gravity: ToastGravity.BOTTOM,
                             backgroundColor: const Color(0xAA000000),
@@ -131,12 +162,10 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
                         }
                       } else {
                         Fluttertoast.showToast(
-                          msg: "아이디 중복 검사를 해주세요.",
-                          toastLength:
-                              Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
-                          gravity:
-                              ToastGravity.BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
-                          backgroundColor: const Color(0xAA000000), // 반투명 검정
+                          msg: "정보를 다 입력해주시길 바랍니다.",
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.BOTTOM,
+                          backgroundColor: const Color(0xAA000000),
                           textColor: Colors.white,
                           fontSize: 16.0.sp,
                         );
@@ -218,12 +247,7 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return '값을 입력해주세요.';
-                    }
-                    return null; // 검증 통과
-                  },
+
                   style: TextStyle(fontSize: 16.sp),
                 ),
               ),
