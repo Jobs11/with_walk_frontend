@@ -62,7 +62,7 @@ Flutter(Dart) 기반으로 개발되며, 자체 백엔드 서버와 연동하여
 | Backend | Custom Server (REST API / JSON) |
 | Database | TBD (예: Firebase / Supabase / PostgreSQL 등) |
 | IDE | Visual Studio Code |
-| Map | Naver Map API or Google Maps API |
+| Map | Naver Map API or Kakao Map API |
 | Auth | Kakao / Google / Email 기반 로그인 |
 
 ---
