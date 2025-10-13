@@ -38,8 +38,7 @@ class _WalkingTalkScreenState extends State<WalkingTalkScreen> {
   }
 
   Future<void> _showCreatePostDialog() async {
-    final userId = CurrentUser.instance.member?.mId;
-    if (userId == null) return;
+    final userId = CurrentUser.instance.member!.mId;
 
     // 사용자의 운동 기록 불러오기
     final records = await StreetService.getStreetAllList(userId);
@@ -130,7 +129,9 @@ class _WalkingTalkScreenState extends State<WalkingTalkScreen> {
                     onLike: () async {
                       final userId = CurrentUser.instance.member?.mId;
                       if (userId != null && posts[i].pNum != null) {
+                        debugPrint('Like: ${posts[i].pNum!}, id: $userId');
                         await PostService.toggleLike(posts[i].pNum!, userId);
+
                         _loadPosts();
                       }
                     },

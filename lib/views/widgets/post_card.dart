@@ -37,14 +37,7 @@ class PostCard extends StatelessWidget {
           // 사용자 정보
           Row(
             children: [
-              CircleAvatar(
-                radius: 20.r,
-                backgroundColor: current.accent,
-                child: Text(
-                  post.mId[0].toUpperCase(),
-                  style: TextStyle(color: current.bg, fontSize: 16.sp),
-                ),
-              ),
+              Image.asset(post.authorImage!, width: 40.w, height: 40.h),
               SizedBox(width: 12.w),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

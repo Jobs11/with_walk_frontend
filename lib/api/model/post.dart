@@ -7,7 +7,13 @@ class Post {
   final String? pImage; // 이미지 URL
   final String pDate;
   final int pLikes;
-  final List<String>? likedBy; // 좋아요 누른 사용자 ID 목록
+
+  // 추가 필드
+  final String? authorName; // ✅ nullable
+  final String? authorImage; // ✅ nullable
+  final int likeCount;
+  final int commentCount;
+  final bool isLikedByUser;
 
   const Post({
     this.pNum,
@@ -17,28 +23,35 @@ class Post {
     this.pImage,
     required this.pDate,
     this.pLikes = 0,
-    this.likedBy,
+    this.authorName,
+    this.authorImage,
+    this.likeCount = 0,
+    this.commentCount = 0,
+    this.isLikedByUser = false,
   });
 
   factory Post.fromJson(Map<String, dynamic> json) => Post(
-    pNum: (json['p_num'] as num?)?.toInt(),
-    mId: json['m_id'] as String,
-    rNum: json['r_num']?.toString(),
-    pContent: json['p_content'] as String,
-    pImage: json['p_image'] as String?,
-    pDate: json['p_date'] as String,
-    pLikes: (json['p_likes'] as num?)?.toInt() ?? 0,
-    likedBy: (json['liked_by'] as List?)?.cast<String>(),
+    pNum: (json['pnum'] as num?)?.toInt(),
+    mId: json['mid'] as String,
+    rNum: json['rnum']?.toString(),
+    pContent: json['pcontent'] as String,
+    pImage: json['pimage'] as String?,
+    pDate: json['pdate'] as String,
+    pLikes: (json['plikes'] as num?)?.toInt() ?? 0,
+    authorName: json['authorName'] as String?,
+    authorImage: json['authorImage'] as String?,
+    likeCount: json['likeCount'] as int,
+    commentCount: json['commentCount'] as int,
+    isLikedByUser: json['isLikedByUser'] as bool,
   );
 
   Map<String, dynamic> toJson() => {
-    if (pNum != null) 'p_num': pNum,
-    'm_id': mId,
-    if (rNum != null) 'r_num': rNum,
-    'p_content': pContent,
-    if (pImage != null) 'p_image': pImage,
-    'p_date': pDate,
-    'p_likes': pLikes,
-    if (likedBy != null) 'liked_by': likedBy,
+    if (pNum != null) 'pnum': pNum,
+    'mid': mId, // ✅ 수정됨
+    if (rNum != null) 'rnum': rNum,
+    'pcontent': pContent,
+    if (pImage != null) 'pimage': pImage,
+    'pdate': pDate,
+    'plikes': pLikes,
   };
 }

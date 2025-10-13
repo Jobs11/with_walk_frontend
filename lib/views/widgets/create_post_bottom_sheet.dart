@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -51,6 +53,8 @@ class _CreatePostBottomSheetState extends State<CreatePostBottomSheet> {
       return;
     }
 
+    debugPrint("사용자ID: ${widget.userId}");
+
     setState(() => _isLoading = true);
 
     try {
@@ -61,6 +65,8 @@ class _CreatePostBottomSheetState extends State<CreatePostBottomSheet> {
         pImage: _uploadedImageUrl,
         pDate: DateTime.now().toIso8601String(),
       );
+
+      debugPrint("json ${jsonEncode(post.toJson())}");
 
       await PostService.createPostWithImage(
         post: post,

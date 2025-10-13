@@ -6,6 +6,7 @@ import 'package:with_walk/functions/widegt_fn.dart';
 import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 import 'package:with_walk/views/dialogs/profile_change.dart';
+import 'package:with_walk/views/screens/login_screen.dart';
 import 'package:with_walk/views/screens/membership_update_screen.dart';
 
 class WalkingProfileScreen extends StatefulWidget {
@@ -77,22 +78,44 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
                   ),
                 ),
                 SizedBox(height: 10.h),
-                colorbtn(
-                  "프로필 수정",
-                  current.bg,
-                  current.btn,
-                  current.btn,
-                  200,
-                  36,
-                  () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            MembershipUpdateScreen(current: current),
-                      ),
-                    );
-                  },
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    colorbtn(
+                      "프로필 수정",
+                      current.bg,
+                      current.btn,
+                      current.btn,
+                      160,
+                      36,
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                MembershipUpdateScreen(current: current),
+                          ),
+                        );
+                      },
+                    ),
+                    SizedBox(width: 8.w),
+
+                    colorbtn(
+                      "로그아웃",
+                      current.btn,
+                      current.bg,
+                      current.bg,
+                      160,
+                      36,
+                      () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => LoginScreen()),
+                        );
+                        setState(() => CurrentUser.instance.member = null);
+                      },
+                    ),
+                  ],
                 ),
                 SizedBox(height: 10.h),
                 Container(

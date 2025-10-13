@@ -22,10 +22,10 @@ class PostService {
     if (imageFile != null) {
       // 멀티파트 요청 (이미지 포함)
       var request = http.MultipartRequest('POST', url);
-      request.fields['m_id'] = post.mId;
-      if (post.rNum != null) request.fields['r_num'] = post.rNum!;
-      request.fields['p_content'] = post.pContent;
-      request.fields['p_date'] = post.pDate;
+      request.fields['mid'] = post.mId;
+      if (post.rNum != null) request.fields['rnum'] = post.rNum!;
+      request.fields['pcontent'] = post.pContent;
+      request.fields['pdate'] = post.pDate;
 
       request.files.add(
         await http.MultipartFile.fromPath('image', imageFile.path),
@@ -73,8 +73,8 @@ class PostService {
     final url = Uri.parse("${Baseurl.b}$menu/$likePost");
     final res = await http.post(
       url,
-      headers: {'Content-Type': 'application/json; charset=utf-8'},
-      body: jsonEncode({'p_num': postNum, 'user_id': userId}),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {'p_num': postNum.toString(), 'user_id': userId},
     );
 
     if (res.statusCode != 200) {
