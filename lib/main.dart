@@ -16,6 +16,9 @@ void main() async {
     },
   );
 
+  // ✅ Firebase 초기화
+  //await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   // 세로 모드만 허용
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp, // 세로 위

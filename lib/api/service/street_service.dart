@@ -1,0 +1,63 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+import 'package:with_walk/api/model/street.dart';
+import 'package:with_walk/functions/data.dart';
+
+class StreetService {
+  static const String menual = "street";
+  static const String registerStreet = "register";
+  static const String getListStreet = "getlist";
+  static const String getAllStreet = "getalllist";
+  static const String deleteStreet = "delete";
+
+  static Future<void> registerS(Street street) async {
+    final url = Uri.parse("${Baseurl.b}$menual/$registerStreet");
+    final res = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json; charset=utf-8'},
+          body: jsonEncode(street.toJson()),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    // 디버깅에 도움되도록 응답 본문 포함
+    if (res.statusCode != 201 && res.statusCode != 200) {
+      throw Exception("Register failed: ${res.statusCode} ${res.body}");
+    }
+  }
+
+  static Future<List<Street>> getStreetList(String id, String date) async {
+    List<Street> streetInstances = [];
+    final url = Uri.parse(
+      '${Baseurl.b}$menual/$getListStreet',
+    ).replace(queryParameters: {'m_id': id, 'r_date': date});
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> streets = jsonDecode(response.body);
+      for (var street in streets) {
+        streetInstances.add(Street.fromJson(street));
+      }
+      return streetInstances;
+    }
+    throw Error();
+  }
+
+  static Future<List<Street>> getStreetAllList(String id) async {
+    List<Street> streetInstances = [];
+    final url = Uri.parse(
+      '${Baseurl.b}$menual/$getAllStreet',
+    ).replace(queryParameters: {'m_id': id});
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> streets = jsonDecode(response.body);
+      for (var street in streets) {
+        streetInstances.add(Street.fromJson(street));
+      }
+      return streetInstances;
+    }
+    throw Error();
+  }
+}

@@ -35,10 +35,7 @@ class _MainhomeScreenState extends State<MainhomeScreen> {
     return SafeArea(
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        body: IndexedStack(
-          index: _index,
-          children: _pages,
-        ), // ✅ 전환 애니 없음, 상태 유지
+        body: _pages[_index], // ✅ 전환 애니 없음, 상태 유지
         bottomNavigationBar: WithWalkNavigationbar(
           currentIndex: _index,
           onTap: (i) => setState(() => _index = i),

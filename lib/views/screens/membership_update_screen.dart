@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:with_walk/api/model/member.dart';
-import 'package:with_walk/api/service/memberservice.dart';
+import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/functions/widegt_fn.dart';
 import 'package:with_walk/theme/colors.dart';
