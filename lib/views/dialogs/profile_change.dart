@@ -36,7 +36,7 @@ class __ProfileChangeDialogState extends State<_ProfileChangeDialog> {
       mName: m!.mName,
       mNickname: m!.mNickname,
       mEmail: m!.mEmail,
-      mPaint: img,
+      mProfileImage: img,
     );
 
     try {

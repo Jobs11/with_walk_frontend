@@ -44,7 +44,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
       mName: nameController.text.trim(),
       mNickname: nicknameController.text.trim(),
       mEmail: '${emailController.text.trim()}@$selectedValue',
-      mPaint: paint,
+      mProfileImage: paint,
     );
 
     try {

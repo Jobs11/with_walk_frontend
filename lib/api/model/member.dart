@@ -5,7 +5,7 @@ class Member {
   final String mName;
   final String mNickname;
   final String mEmail;
-  final String? mPaint;
+  final String? mProfileImage;
 
   const Member({
     this.mNum,
@@ -14,7 +14,7 @@ class Member {
     required this.mEmail,
     required this.mId,
     required this.mPassword,
-    this.mPaint,
+    this.mProfileImage,
   });
 
   factory Member.fromJson(Map<String, dynamic> json) => Member(
@@ -24,7 +24,7 @@ class Member {
     mName: json['m_name'] as String,
     mNickname: json['m_nickname'] as String,
     mEmail: json['m_email'] as String,
-    mPaint: json['m_paint'] as String?,
+    mProfileImage: json['m_profile_image'] as String?,
   );
 
   Map<String, dynamic> toJson() => {
@@ -34,10 +34,13 @@ class Member {
     'm_name': mName,
     'm_nickname': mNickname,
     'm_email': mEmail,
-    'm_paint': mPaint,
+    'm_profile_image': mProfileImage,
   };
 
-  Map<String, dynamic> toJsonPaintOnly() => {'m_id': mId, 'm_paint': mPaint};
+  Map<String, dynamic> toJsonPaintOnly() => {
+    'm_id': mId,
+    'm_profile_image': mProfileImage,
+  };
 
   Map<String, dynamic> toJsonUpdate() => {
     // Dart → JSON 매핑

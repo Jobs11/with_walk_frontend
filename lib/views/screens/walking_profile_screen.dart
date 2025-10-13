@@ -60,7 +60,7 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
                     }
                   },
                   child: Image.asset(
-                    CurrentUser.instance.member!.mPaint ??
+                    CurrentUser.instance.member!.mProfileImage ??
                         'assets/images/icons/user.png',
                     fit: BoxFit.cover,
                     width: 120.w,

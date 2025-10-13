@@ -33,7 +33,7 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
   @override
   void initState() {
     super.initState();
-    paint = m.mPaint!;
+    paint = m.mProfileImage!;
     nameController.text = m.mName;
     nicknameController.text = m.mNickname;
     emailController.text = m.mEmail.split('@')[0];
@@ -47,7 +47,7 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
       mEmail: '${emailController.text.trim()}@$selectedValue',
       mId: m.mId,
       mPassword: passwordController.text.trim(),
-      mPaint: m.mPaint,
+      mProfileImage: m.mProfileImage,
     );
 
     try {
