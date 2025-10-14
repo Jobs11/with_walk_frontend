@@ -109,7 +109,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
           preferredSize: Size.fromHeight(43.h),
           child: WithWalkAppbar(
             titlename: "회원가입",
-            isBack: false,
+            isBack: true,
             isColored: widget.current.app,
             fontColor: widget.current.fontThird,
           ),

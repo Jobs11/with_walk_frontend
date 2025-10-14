@@ -6,6 +6,7 @@ class Member {
   final String mNickname;
   final String mEmail;
   final String? mProfileImage;
+  final String? mRole;
 
   const Member({
     this.mNum,
@@ -15,6 +16,7 @@ class Member {
     required this.mId,
     required this.mPassword,
     this.mProfileImage,
+    this.mRole,
   });
 
   factory Member.fromJson(Map<String, dynamic> json) => Member(
@@ -25,6 +27,7 @@ class Member {
     mNickname: json['m_nickname'] as String,
     mEmail: json['m_email'] as String,
     mProfileImage: json['m_profile_image'] as String?,
+    mRole: json['m_role'] as String?,
   );
 
   Map<String, dynamic> toJson() => {

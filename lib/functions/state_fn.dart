@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 String formatTime(int totalSeconds) {
   final hours = totalSeconds ~/ 3600;
   final minutes = (totalSeconds % 3600) ~/ 60;
@@ -13,4 +15,8 @@ String formatTime(int totalSeconds) {
     // 1분 미만
     return "$seconds초";
   }
+}
+
+void openScreen(BuildContext context, WidgetBuilder builder) {
+  Navigator.push(context, MaterialPageRoute(builder: builder));
 }

@@ -553,14 +553,15 @@ class _DistanceWidgetState extends State<DistanceWidget> {
                       : Icon(Icons.my_location, color: current.bg, size: 18.sp),
                 ),
               ),
-            _autocompleteField(title, controller),
+            _addressInputField(title, controller),
           ],
         ),
       ],
     );
   }
 
-  Widget _autocompleteField(String hint, TextEditingController ctrl) {
+  /// ✅ 주소 직접 입력 + 장소 검색 통합 필드
+  Widget _addressInputField(String hint, TextEditingController ctrl) {
     return Container(
       width: 200.w,
       height: 36.h,
@@ -570,17 +571,22 @@ class _DistanceWidgetState extends State<DistanceWidget> {
         border: Border.all(color: current.accent),
         borderRadius: BorderRadius.circular(12.r),
       ),
-      child: TypeAheadField<PlaceResult>(
+      child: TypeAheadField<dynamic>(
         hideOnEmpty: true,
         hideOnLoading: true,
-        hideOnUnfocus: true,
+        hideOnUnfocus: false, // ✅ 엔터키 입력을 위해 false
         hideOnSelect: true,
-        debounceDuration: const Duration(milliseconds: 300),
+        debounceDuration: const Duration(milliseconds: 400),
+
         suggestionsCallback: (q) async {
           final query = q.trim();
-          if (query.isEmpty) return [];
-          return await _naver.searchPlaces(query);
+          if (query.isEmpty || query.length < 2) return [];
+
+          // ✅ 장소명 검색만 자동완성으로 제공
+          final places = await _naver.searchPlaces(query);
+          return places;
         },
+
         builder: (context, tController, focusNode) {
           if (tController.text != ctrl.text) {
             tController.value = ctrl.value;
@@ -590,6 +596,45 @@ class _DistanceWidgetState extends State<DistanceWidget> {
             focusNode: focusNode,
             onChanged: (_) => ctrl.value = tController.value,
             textInputAction: TextInputAction.search,
+
+            // ✅ 엔터키 또는 검색 버튼 누르면 주소로 직접 검색
+            onSubmitted: (value) async {
+              final address = value.trim();
+              if (address.isEmpty) return;
+
+              FocusScope.of(context).unfocus();
+
+              // ✅ 주소 → 좌표 변환
+              final latLng = await _naver.geocodeToLatLng(address);
+
+              if (!mounted) return;
+
+              if (latLng == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('해당 주소를 찾을 수 없습니다. 다시 입력해주세요.')),
+                );
+                return;
+              }
+
+              // ✅ 마커 표시
+              final isStart = hint.trim() == '출발';
+              if (isStart) {
+                await _setStart(latLng);
+                ctrl.text = address;
+              } else {
+                await _setGoal(latLng);
+                ctrl.text = address;
+              }
+
+              await _flyTo(latLng, zoom: 16);
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('✅ 위치가 설정되었습니다: $address')),
+                );
+              }
+            },
+
             onTap: () {
               if (tController.selection.start == tController.selection.end) {
                 tController.selection = TextSelection.fromPosition(
@@ -597,31 +642,80 @@ class _DistanceWidgetState extends State<DistanceWidget> {
                 );
               }
             },
+
             decoration: InputDecoration(
               counterText: '',
               border: InputBorder.none,
               hintText: hint,
+              suffixIcon: IconButton(
+                icon: Icon(Icons.search, size: 18.sp, color: current.accent),
+                onPressed: () async {
+                  // ✅ 검색 버튼 클릭 시에도 주소로 검색
+                  final address = tController.text.trim();
+                  if (address.isEmpty) return;
+
+                  FocusScope.of(context).unfocus();
+
+                  final latLng = await _naver.geocodeToLatLng(address);
+
+                  if (!mounted) return;
+
+                  if (latLng == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('해당 주소를 찾을 수 없습니다.')),
+                    );
+                    return;
+                  }
+
+                  final isStart = hint.trim() == '출발';
+                  if (isStart) {
+                    await _setStart(latLng);
+                    ctrl.text = address;
+                  } else {
+                    await _setGoal(latLng);
+                    ctrl.text = address;
+                  }
+
+                  await _flyTo(latLng, zoom: 16);
+                },
+              ),
               hintStyle: TextStyle(
                 color: current.fontPrimary,
                 fontWeight: FontWeight.bold,
+                fontSize: 13.sp,
               ),
             ),
-            style: TextStyle(fontSize: 16.sp),
+            style: TextStyle(fontSize: 14.sp),
           );
         },
-        itemBuilder: (context, item) => ListTile(
-          dense: true,
-          visualDensity: VisualDensity.compact,
-          title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle: Text(
-            item.roadAddr.isNotEmpty ? item.roadAddr : item.jibunAddr,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        onSelected: (item) async {
-          ctrl.text = item.title;
 
+        // ✅ 장소명 자동완성 결과 표시
+        itemBuilder: (context, item) {
+          if (item is! PlaceResult) return const SizedBox.shrink();
+
+          return ListTile(
+            dense: true,
+            visualDensity: VisualDensity.compact,
+            leading: Icon(Icons.store, color: current.accent, size: 20.sp),
+            title: Text(
+              item.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              item.roadAddr.isNotEmpty ? item.roadAddr : item.jibunAddr,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 11.sp),
+            ),
+          );
+        },
+
+        // ✅ 장소명 선택 시
+        onSelected: (item) async {
+          if (item is! PlaceResult) return;
+
+          ctrl.text = item.title;
           FocusScope.of(context).unfocus();
 
           final addr = item.roadAddr.isNotEmpty
@@ -629,7 +723,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
               : item.jibunAddr;
           final latLng = await _naver.geocodeToLatLng(addr);
 
-          if (!mounted) return; // ✅ 비동기 작업 후 mounted 체크
+          if (!mounted) return;
 
           if (latLng == null) {
             debugPrint('❌ geocode null for "$addr"');

@@ -1,13 +1,9 @@
-// lib/views/screens/walking_talk_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'package:with_walk/api/model/post.dart';
-
 import 'package:with_walk/api/service/post_service.dart';
 import 'package:with_walk/api/service/street_service.dart';
 import 'package:with_walk/functions/data.dart';
-
 import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 import 'package:with_walk/views/widgets/create_post_bottom_sheet.dart';
@@ -131,10 +127,11 @@ class _WalkingTalkScreenState extends State<WalkingTalkScreen> {
                       if (userId != null && posts[i].pNum != null) {
                         debugPrint('Like: ${posts[i].pNum!}, id: $userId');
                         await PostService.toggleLike(posts[i].pNum!, userId);
-
                         _loadPosts();
                       }
                     },
+                    onCommentChanged: _loadPosts,
+                    onPostDeleted: _loadPosts, // 삭제 시 새로고침
                   ),
                 );
               },

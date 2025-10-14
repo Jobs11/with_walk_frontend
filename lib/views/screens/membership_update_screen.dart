@@ -90,7 +90,7 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
           preferredSize: Size.fromHeight(43.h),
           child: WithWalkAppbar(
             titlename: "프로필 수정",
-            isBack: false,
+            isBack: true,
             isColored: widget.current.app,
             fontColor: widget.current.fontThird,
           ),
