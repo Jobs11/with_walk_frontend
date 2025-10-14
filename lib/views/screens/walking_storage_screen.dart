@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:with_walk/api/model/street.dart';
 import 'package:with_walk/api/service/street_service.dart';
@@ -65,6 +66,35 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
       debugPrint('⚠️ _loadRecordDates() 오류: $e');
       debugPrint('$st');
     }
+  }
+
+  Future<void> _update(int rNum) async {
+    try {
+      debugPrint('계: $rNum');
+      await StreetService.deleteS(rNum);
+      // 서버는 200/201만 주면 OK
+
+      if (!mounted) return;
+      Fluttertoast.showToast(
+        msg: "발자취 삭제 완료!",
+        toastLength: Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
+        gravity: ToastGravity.BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
+        backgroundColor: const Color(0xAA000000), // 반투명 검정
+        textColor: Colors.white,
+        fontSize: 16.0.sp,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Fluttertoast.showToast(
+        msg: "발자취 삭제 실패!",
+        toastLength: Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
+        gravity: ToastGravity.BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
+        backgroundColor: const Color(0xAA000000), // 반투명 검정
+        textColor: Colors.white,
+        fontSize: 16.0.sp,
+      );
+      debugPrint('발자취: $e');
+    } finally {}
   }
 
   @override
@@ -240,13 +270,30 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
             children: [
               Icon(Icons.access_time, size: 16.sp, color: current.accent),
               SizedBox(width: 8.w),
-              Text(
-                '${DateFormat('MM. dd. HH:mm:ss').format(s.rStartTime)} - ${DateFormat('MM. dd. HH:mm:ss').format(s.rEndTime)}',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                  color: current.fontThird,
+              Expanded(
+                child: Text(
+                  '${DateFormat('MM. dd. HH:mm:ss').format(s.rStartTime)} - ${DateFormat('MM. dd. HH:mm:ss').format(s.rEndTime)}',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: current.fontThird,
+                  ),
                 ),
+              ),
+              IconButton(
+                icon: Icon(Icons.delete_outline, size: 20.sp),
+                color: Colors.red.withValues(alpha: 0.7),
+                onPressed: () {
+                  _update(s.rNum!);
+                  setState(() {
+                    streets = StreetService.getStreetList(
+                      CurrentUser.instance.member!.mId,
+                      '${selectedDate.month}-${selectedDate.day}',
+                    );
+                  });
+                },
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
             ],
           ),

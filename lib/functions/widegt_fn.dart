@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/theme/colors.dart';
 
@@ -40,6 +41,17 @@ Widget inputdata(
   ThemeColors colors,
   double ws,
 ) {
+  // 비밀번호 필드 여부 확인
+  bool isPasswordField = title.contains('비밀번호');
+
+  // 입력 필터 설정 (아이디 또는 비밀번호일 때 영문+숫자만)
+  List<TextInputFormatter>? inputFormatters;
+  if (title == '아이디' || isPasswordField) {
+    inputFormatters = [
+      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+    ];
+  }
+
   return Container(
     width: ws.w,
     height: 36.h,
@@ -51,10 +63,12 @@ Widget inputdata(
     ),
     child: TextFormField(
       controller: controller,
+      obscureText: isPasswordField, // 비밀번호 필드일 때 *** 처리
+      inputFormatters: inputFormatters, // 영문+숫자만 입력
       decoration: InputDecoration(
         counterText: '',
-        border: InputBorder.none, // 테두리 제거 (BoxDecoration에서 그림)
-        hintText: title, // 플레이스홀더
+        border: InputBorder.none,
+        hintText: title,
         hintStyle: TextStyle(
           color: colors.fontPrimary,
           fontWeight: FontWeight.bold,

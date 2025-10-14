@@ -23,6 +23,8 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
   final nameController = TextEditingController();
   final nicknameController = TextEditingController();
   final emailController = TextEditingController();
+  final lastemailController = TextEditingController();
+
   String? selectedValue;
   bool showDropdown = false; // 드롭다운 표시 여부
   String? paint;
@@ -37,14 +39,15 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
     nameController.text = m.mName;
     nicknameController.text = m.mNickname;
     emailController.text = m.mEmail.split('@')[0];
-    selectedValue = m.mEmail.split('@')[1];
+    lastemailController.text = m.mEmail.split('@')[1];
   }
 
   Future<void> _update() async {
     final member = Member(
       mName: nameController.text.trim(),
       mNickname: nicknameController.text.trim(),
-      mEmail: '${emailController.text.trim()}@$selectedValue',
+      mEmail:
+          '${emailController.text.trim()}@${lastemailController.text.trim()}',
       mId: m.mId,
       mPassword: passwordController.text.trim(),
       mProfileImage: m.mProfileImage,
@@ -228,7 +231,7 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                width: 150.w,
+                width: 100.w,
                 height: 36.h,
                 padding: EdgeInsets.symmetric(horizontal: 6.w),
                 decoration: BoxDecoration(
@@ -248,7 +251,7 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
                     ),
                   ),
 
-                  style: TextStyle(fontSize: 16.sp),
+                  style: TextStyle(fontSize: 12.sp),
                 ),
               ),
               Text(
@@ -256,7 +259,7 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               Container(
-                width: 150.w,
+                width: 100.w,
                 height: 36.h,
                 padding: EdgeInsets.symmetric(horizontal: 6.w),
                 decoration: BoxDecoration(
@@ -264,39 +267,69 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
                   border: Border.all(color: widget.current.accent),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 5,
-                      ),
-                      child: DropdownButton<String>(
-                        value: selectedValue,
-                        hint: Text('선택하세요'),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                        items:
-                            ['gmail.com', 'naver.com', 'nate.com', 'daum.net']
-                                .map(
-                                  (item) => DropdownMenuItem(
-                                    value: item,
-                                    child: Text(item),
-                                  ),
-                                )
-                                .toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            selectedValue = value;
-                            showDropdown = false; // 선택 후 목록 닫기
-                          });
-                        },
-                      ),
+                child: TextFormField(
+                  controller: lastemailController,
+                  decoration: InputDecoration(
+                    counterText: '',
+                    border: InputBorder.none, // 테두리 제거 (BoxDecoration에서 그림)
+                    hintText: "xxx.co.kr", // 플레이스홀더
+                    hintStyle: TextStyle(
+                      color: widget.current.fontPrimary,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
+                  ),
+
+                  style: TextStyle(fontSize: 12.sp),
+                ),
+              ),
+              Container(
+                width: 110.w,
+                height: 36.h,
+                padding: EdgeInsets.symmetric(horizontal: 6.w),
+                decoration: BoxDecoration(
+                  color: widget.current.bg,
+                  border: Border.all(color: widget.current.accent),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 5.h),
+                  child: DropdownButton<String>(
+                    value: selectedValue,
+                    hint: Text('선택'),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    items:
+                        [
+                              '기본 값',
+                              'gmail.com',
+                              'naver.com',
+                              'nate.com',
+                              'daum.net',
+                            ]
+                            .map(
+                              (item) => DropdownMenuItem(
+                                value: item,
+                                child: Text(item),
+                              ),
+                            )
+                            .toList(),
+
+                    onChanged: (value) {
+                      setState(() {
+                        if (value == "기본 값") {
+                          selectedValue = null;
+                          lastemailController.text = selectedValue ?? '';
+                        } else {
+                          selectedValue = value;
+                          lastemailController.text = value!;
+                        }
+                        showDropdown = false; // 선택 후 목록 닫기
+                      });
+                    },
+                  ),
                 ),
               ),
             ],

@@ -60,4 +60,21 @@ class StreetService {
     }
     throw Error();
   }
+
+  static Future<void> deleteS(int rNum) async {
+    final url = Uri.parse(
+      "${Baseurl.b}$menual/$deleteStreet",
+    ).replace(queryParameters: {'r_num': rNum.toString()});
+
+    final res = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+      }, // JSON body 없어도 가능
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception("deleteStreet failed: ${res.statusCode} ${res.body}");
+    }
+  }
 }

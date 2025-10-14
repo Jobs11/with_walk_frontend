@@ -127,7 +127,7 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
                       ),
                       child: ClipOval(
                         child: Image.asset(
-                          CurrentUser.instance.member!.mProfileImage ??
+                          CurrentUser.instance.member?.mProfileImage ??
                               'assets/images/icons/user.png',
                           fit: BoxFit.cover,
                           width: 100.w,
@@ -141,7 +141,7 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
 
                   // 이름
                   Text(
-                    '${CurrentUser.instance.member!.mNickname} 님',
+                    '${CurrentUser.instance.member?.mNickname ?? '손'}님',
                     style: TextStyle(
                       fontSize: 28.sp,
                       color: current.fontThird,
