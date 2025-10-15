@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:with_walk/api/model/post_comment.dart';
 import 'package:with_walk/functions/data.dart';
@@ -11,21 +12,61 @@ class PostCommentService {
 
   // 댓글 목록 조회
   static Future<List<PostComment>> getCommentList(int pNum) async {
-    List<PostComment> commentInstances = [];
-    final url = Uri.parse('${Baseurl.b}$manual/$getComments/$pNum');
+    try {
+      final currentUserId = CurrentUser.instance.member?.mId ?? '';
 
-    final response = await http.get(url).timeout(const Duration(seconds: 10));
+      debugPrint('📤 API 요청 시작');
+      debugPrint('   - URL: ${Baseurl.b}$manual/comment-writer/$pNum');
+      debugPrint('   - user_id: $currentUserId');
 
-    if (response.statusCode == 200) {
-      final List<dynamic> comments = jsonDecode(
-        utf8.decode(response.bodyBytes),
+      final response = await http.get(
+        Uri.parse('${Baseurl.b}$manual/comment-writer/$pNum'),
+        headers: {'Content-Type': 'application/json', 'user_id': currentUserId},
       );
-      for (var comment in comments) {
-        commentInstances.add(PostComment.fromJson(comment));
+
+      print('📥 응답 상태: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = json.decode(response.body);
+
+        // 🔍 백엔드 응답 원본 확인
+        debugPrint('📦 백엔드 응답 원본:');
+        debugPrint(response.body);
+
+        debugPrint('\n🔍 각 댓글 데이터:');
+        for (var json in jsonList) {
+          debugPrint('─────────────────────────────');
+          debugPrint('  pc_num: ${json['pcNum']}');
+          debugPrint('  pc_content: ${json['pcContent']}');
+          debugPrint('  author_name: ${json['authorName']}');
+          debugPrint('  is_liked: ${json['isLiked']}');
+          debugPrint('  like_count: ${json['likeCount']}');
+          debugPrint(
+            '  is_liked_by_author: ${json['is_liked_by_author']}',
+          ); // 👈 핵심!
+          debugPrint('  타입: ${json['is_liked_by_author'].runtimeType}');
+        }
+        debugPrint('─────────────────────────────\n');
+
+        final comments = jsonList
+            .map((json) => PostComment.fromJson(json))
+            .toList();
+
+        debugPrint('✅ 파싱된 댓글 객체:');
+        for (var comment in comments) {
+          debugPrint(
+            '  댓글 ${comment.pcNum}: isLikedByAuthor=${comment.isLikedByAuthor}',
+          );
+        }
+
+        return comments;
+      } else {
+        throw Exception('댓글 목록 조회 실패: ${response.statusCode}');
       }
-      return commentInstances;
+    } catch (e) {
+      debugPrint('❌ 에러 발생: $e');
+      throw Exception('댓글 목록 조회 중 오류 발생: $e');
     }
-    throw Exception('댓글 목록을 불러올 수 없습니다: ${response.statusCode}');
   }
 
   // 댓글 작성

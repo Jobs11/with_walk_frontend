@@ -5,6 +5,7 @@ import 'package:with_walk/api/model/post.dart';
 import 'package:with_walk/api/model/post_comment.dart';
 import 'package:with_walk/api/model/street.dart';
 import 'package:with_walk/api/service/member_service.dart';
+import 'package:with_walk/api/service/post_comment_like_service.dart';
 import 'package:with_walk/api/service/post_comment_service.dart';
 import 'package:with_walk/api/service/post_service.dart';
 import 'package:with_walk/api/service/street_service.dart';
@@ -288,6 +289,56 @@ class _PostCardState extends State<PostCard> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('삭제 실패: $e')));
+    }
+  }
+
+  Future<void> _toggleCommentLike(PostComment comment) async {
+    if (comment.pcNum == null) return;
+
+    final currentUserId = CurrentUser.instance.member?.mId;
+    if (currentUserId == null) return;
+
+    // 🔴 원본 값 저장
+    final originalIsLiked = comment.isLiked;
+    final originalLikeCount = comment.likeCount;
+
+    // 🔴 1단계: 즉시 UI 업데이트
+    setState(() {
+      comment.isLiked = !comment.isLiked;
+      comment.likeCount += comment.isLiked ? 1 : -1;
+    });
+
+    try {
+      // 🔴 2단계: 백엔드 API 호출
+      final result = await PostCommentLikeService.toggleLike(
+        comment.pcNum!,
+        currentUserId,
+      );
+
+      // 🔴 3단계: 백엔드 응답으로 정확한 값 업데이트
+      if (mounted) {
+        setState(() {
+          comment.isLiked = result['isLiked'] ?? false;
+          comment.likeCount = result['likeCount'] ?? 0;
+          comment.isLikedByAuthor =
+              result['isLikedByAuthor'] ?? false; // 🆕 즉시 반영!
+        });
+      }
+
+      debugPrint(
+        '✅ 좋아요 업데이트: isLiked=${comment.isLiked}, '
+        'likeCount=${comment.likeCount}, '
+        'isLikedByAuthor=${comment.isLikedByAuthor}',
+      );
+    } catch (e) {
+      // 실패 시 원래대로 되돌림
+      if (mounted) {
+        setState(() {
+          comment.isLiked = originalIsLiked;
+          comment.likeCount = originalLikeCount;
+        });
+      }
+      debugPrint('❌ 댓글 좋아요 처리 실패: $e');
     }
   }
 
@@ -575,6 +626,77 @@ class _PostCardState extends State<PostCard> {
                               comment.pcContent,
                               current,
                             ),
+
+                            // 댓글 좋아요 버튼 추가
+                            SizedBox(height: 4.h),
+                            Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: () => _toggleCommentLike(comment),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        comment.isLiked
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        size: 14.sp,
+                                        color: comment.isLiked
+                                            ? Colors.red
+                                            : Colors.grey[600],
+                                      ),
+                                      if (comment.likeCount > 0) ...[
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          '${comment.likeCount}',
+                                          style: TextStyle(
+                                            fontSize: 11.sp,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+
+                                // 작성자가 좋아요한 경우 표시 (미리보기)
+                                if (comment.isLikedByAuthor) ...[
+                                  SizedBox(width: 6.w),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 5.w,
+                                      vertical: 1.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(10.r),
+                                      border: Border.all(
+                                        color: Colors.red.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Image.asset(
+                                          comment.authorImage ??
+                                              'assets/images/icons/user.png',
+                                          width: 12.w,
+                                          height: 12.h,
+                                        ),
+                                        SizedBox(width: 2.w),
+                                        Icon(
+                                          Icons.favorite,
+                                          size: 10.sp,
+                                          color: Colors.red,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -582,7 +704,6 @@ class _PostCardState extends State<PostCard> {
                   ),
                 ),
               ),
-
               // "댓글 n개 모두 보기" 버튼
               if (commentCount > 3)
                 GestureDetector(

@@ -5,6 +5,7 @@ import 'package:with_walk/api/model/member_nickname.dart';
 import 'package:with_walk/api/model/post_comment.dart';
 import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/api/service/post_comment_service.dart';
+import 'package:with_walk/api/service/post_comment_like_service.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/widgets/user_profile_bottom_sheet.dart';
@@ -22,8 +23,6 @@ class CommentBottomSheet extends StatefulWidget {
   @override
   State<CommentBottomSheet> createState() => _CommentBottomSheetState();
 }
-
-// comment_bottom_sheet.dart 수정
 
 class _CommentBottomSheetState extends State<CommentBottomSheet> {
   final _commentController = TextEditingController();
@@ -134,7 +133,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       if (!mounted) return;
 
       _commentController.clear();
-      _taggedNicknames.clear(); // 태그 목록 초기화
+      _taggedNicknames.clear();
       _loadComments();
       widget.onCommentChanged();
 
@@ -168,6 +167,61 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('삭제 실패: $e')));
+    }
+  }
+
+  // 댓글 좋아요 토글
+  Future<void> _toggleCommentLike(PostComment comment) async {
+    if (comment.pcNum == null) return;
+
+    final currentUserId = CurrentUser.instance.member?.mId;
+    if (currentUserId == null) return;
+
+    // 🔴 원본 값 저장 (롤백용)
+    final originalIsLiked = comment.isLiked;
+    final originalLikeCount = comment.likeCount;
+
+    // 🔴 1단계: 즉시 UI 업데이트 (낙관적 업데이트)
+    setState(() {
+      comment.isLiked = !comment.isLiked;
+      comment.likeCount += comment.isLiked ? 1 : -1;
+    });
+
+    try {
+      // 🔴 2단계: 백엔드 API 호출
+      final result = await PostCommentLikeService.toggleLike(
+        comment.pcNum!,
+        currentUserId,
+      );
+
+      // 🔴 3단계: 백엔드 응답으로 정확한 값 업데이트
+      if (mounted) {
+        setState(() {
+          comment.isLiked = result['isLiked'] ?? false;
+          comment.likeCount = result['likeCount'] ?? 0;
+          comment.isLikedByAuthor =
+              result['isLikedByAuthor'] ?? false; // 🆕 즉시 반영!
+        });
+      }
+
+      debugPrint(
+        '✅ 좋아요 업데이트: isLiked=${comment.isLiked}, '
+        'likeCount=${comment.likeCount}, '
+        'isLikedByAuthor=${comment.isLikedByAuthor}',
+      );
+    } catch (e) {
+      // 실패 시 원래대로 되돌림
+      if (mounted) {
+        setState(() {
+          comment.isLiked = originalIsLiked;
+          comment.likeCount = originalLikeCount;
+        });
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('좋아요 처리 중 오류가 발생했습니다')));
+      }
+      debugPrint('❌ 댓글 좋아요 처리 실패: $e');
     }
   }
 
@@ -258,7 +312,6 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       if (!mounted) return;
 
       showModalBottomSheet(
-        // ignore: use_build_context_synchronously
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
@@ -271,7 +324,6 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
-        // ignore: use_build_context_synchronously
         context,
       ).showSnackBar(SnackBar(content: Text('사용자 정보를 불러올 수 없습니다')));
       debugPrint('프로필 로드 실패: $e');
@@ -419,6 +471,81 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                               SizedBox(height: 4.h),
                               // 태그 강조 적용
                               _buildCommentWithTags(comment.pcContent, current),
+
+                              // 좋아요 버튼 추가
+                              SizedBox(height: 8.h),
+                              Row(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () => _toggleCommentLike(comment),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          comment.isLiked
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          size: 16.sp,
+                                          color: comment.isLiked
+                                              ? Colors.red
+                                              : Colors.grey[600],
+                                        ),
+                                        if (comment.likeCount > 0) ...[
+                                          SizedBox(width: 4.w),
+                                          Text(
+                                            '${comment.likeCount}',
+                                            style: TextStyle(
+                                              fontSize: 12.sp,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+
+                                  // 작성자가 좋아요한 경우 표시
+                                  if (comment.isLikedByAuthor) ...[
+                                    SizedBox(width: 8.w),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 6.w,
+                                        vertical: 2.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
+                                        border: Border.all(
+                                          color: Colors.red.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Image.asset(
+                                            comment.authorImage ??
+                                                'assets/images/icons/user.png',
+                                            width: 14.w,
+                                            height: 14.h,
+                                          ),
+                                          SizedBox(width: 3.w),
+                                          Icon(
+                                            Icons.favorite,
+                                            size: 12.sp,
+                                            color: Colors.red,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ],
                           ),
                         ),
