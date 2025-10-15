@@ -20,37 +20,37 @@ class Member {
   });
 
   factory Member.fromJson(Map<String, dynamic> json) => Member(
-    mNum: (json['m_num'] as num?)?.toInt(), // JSON → Dart 매핑
-    mId: json['m_id'] as String,
-    mPassword: json['m_password'] as String,
-    mName: json['m_name'] as String,
-    mNickname: json['m_nickname'] as String,
-    mEmail: json['m_email'] as String,
-    mProfileImage: json['m_profile_image'] as String?,
-    mRole: json['m_role'] as String?,
+    mNum: (json['mnum'] as num?)?.toInt(), // JSON → Dart 매핑
+    mId: json['mid'] as String,
+    mPassword: json['mpassword'] as String,
+    mName: json['mname'] as String,
+    mNickname: json['mnickname'] as String,
+    mEmail: json['memail'] as String,
+    mProfileImage: json['mprofileImage'] as String?,
+    mRole: json['mrole'] as String?,
   );
 
   Map<String, dynamic> toJson() => {
     // Dart → JSON 매핑
-    'm_id': mId,
-    'm_password': mPassword,
-    'm_name': mName,
-    'm_nickname': mNickname,
-    'm_email': mEmail,
-    'm_profile_image': mProfileImage,
+    'mid': mId,
+    'mpassword': mPassword,
+    'mname': mName,
+    'mnickname': mNickname,
+    'memail': mEmail,
+    'mprofileImage': mProfileImage,
   };
 
   Map<String, dynamic> toJsonPaintOnly() => {
-    'm_id': mId,
-    'm_profile_image': mProfileImage,
+    'mid': mId,
+    'mprofileImage': mProfileImage,
   };
 
   Map<String, dynamic> toJsonUpdate() => {
     // Dart → JSON 매핑
-    'm_name': mName,
-    'm_nickname': mNickname,
-    'm_email': mEmail,
-    'm_password': mPassword,
-    'm_id': mId,
+    'mname': mName,
+    'mnickname': mNickname,
+    'memail': mEmail,
+    'mpassword': mPassword,
+    'mid': mId,
   };
 }

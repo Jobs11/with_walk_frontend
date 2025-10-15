@@ -62,6 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
         textColor: Colors.white,
         fontSize: 16.0.sp,
       );
+      debugPrint('why: $e');
     } finally {}
   }
 

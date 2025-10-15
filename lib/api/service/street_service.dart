@@ -31,7 +31,7 @@ class StreetService {
     List<Street> streetInstances = [];
     final url = Uri.parse(
       '${Baseurl.b}$menual/$getListStreet',
-    ).replace(queryParameters: {'m_id': id, 'r_date': date});
+    ).replace(queryParameters: {'mId': id, 'rDate': date});
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -48,7 +48,7 @@ class StreetService {
     List<Street> streetInstances = [];
     final url = Uri.parse(
       '${Baseurl.b}$menual/$getAllStreet',
-    ).replace(queryParameters: {'m_id': id});
+    ).replace(queryParameters: {'mId': id});
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -64,7 +64,7 @@ class StreetService {
   static Future<void> deleteS(int rNum) async {
     final url = Uri.parse(
       "${Baseurl.b}$menual/$deleteStreet",
-    ).replace(queryParameters: {'r_num': rNum.toString()});
+    ).replace(queryParameters: {'rNum': rNum.toString()});
 
     final res = await http.post(
       url,

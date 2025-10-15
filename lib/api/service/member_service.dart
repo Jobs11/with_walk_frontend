@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:with_walk/api/model/member_nickname.dart';
 import 'package:with_walk/functions/data.dart';
@@ -12,7 +13,7 @@ class Memberservice {
   static const String getUserdata = "getUserdata";
   static const String modifyUser = "modify";
   static const String deleteUser = "delete";
-  static const String modifyProfile = "upprofile";
+  static const String modifyProfile = "updateProfile";
   static const String check = "check";
   static const String search = "search";
 
@@ -36,10 +37,12 @@ class Memberservice {
     // GET 요청 → URL에 파라미터로 전달
     final url = Uri.parse(
       "${Baseurl.b}$menual/$getUser",
-    ).replace(queryParameters: {'m_id': id, 'm_password': password});
+    ).replace(queryParameters: {'mId': id, 'mPassword': password});
 
     final response = await http.get(url);
 
+    debugPrint('status: ${response.statusCode}');
+    debugPrint('status: ${response.body}');
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
       return Member.fromJson(json);
@@ -52,7 +55,7 @@ class Memberservice {
     // GET 요청 → URL에 파라미터로 전달
     final url = Uri.parse(
       "${Baseurl.b}$menual/$getUserdata",
-    ).replace(queryParameters: {'m_id': id});
+    ).replace(queryParameters: {'mId': id});
 
     final response = await http.get(url);
 
@@ -68,7 +71,7 @@ class Memberservice {
     // GET 요청 → URL에 파라미터로 전달
     final url = Uri.parse(
       "${Baseurl.b}$menual/$check",
-    ).replace(queryParameters: {'m_nickname': nickname});
+    ).replace(queryParameters: {'mNickname': nickname});
 
     final response = await http.get(url);
 
@@ -84,7 +87,7 @@ class Memberservice {
     List<MemberNickname> memberInstances = [];
     final url = Uri.parse(
       '${Baseurl.b}$menual/$search',
-    ).replace(queryParameters: {'m_nickname': nickname});
+    ).replace(queryParameters: {'mNickname': nickname});
     final response = await http.get(url);
 
     if (response.statusCode == 200) {

@@ -312,6 +312,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       if (!mounted) return;
 
       showModalBottomSheet(
+        // ignore: use_build_context_synchronously
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
@@ -324,6 +325,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
         context,
       ).showSnackBar(SnackBar(content: Text('사용자 정보를 불러올 수 없습니다')));
       debugPrint('프로필 로드 실패: $e');

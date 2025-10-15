@@ -152,6 +152,7 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
                 );
                 await _loadWeeklyGoal();
                 if (!mounted) return;
+                // ignore: use_build_context_synchronously
                 Navigator.pop(context);
                 Fluttertoast.showToast(msg: '주간 목표가 설정되었습니다!');
               } catch (e) {
@@ -270,14 +271,14 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
         padding: EdgeInsets.all(20.w),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [current.accent, current.accent.withOpacity(0.7)],
+            colors: [current.accent, current.accent.withValues(alpha: 0.7)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
-              color: current.accent.withOpacity(0.3),
+              color: current.accent.withValues(alpha: 0.3),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -313,7 +314,7 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
             Row(
               children: [
                 Text(
-                  '${weeklyTotalKm.toStringAsFixed(1)}',
+                  weeklyTotalKm.toStringAsFixed(1),
                   style: TextStyle(
                     fontSize: 32.sp,
                     fontWeight: FontWeight.bold,
@@ -343,7 +344,7 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
               borderRadius: BorderRadius.circular(10.r),
               child: LinearProgressIndicator(
                 value: progress,
-                backgroundColor: Colors.white.withOpacity(0.3),
+                backgroundColor: Colors.white.withValues(alpha: 0.3),
                 valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                 minHeight: 8.h,
               ),

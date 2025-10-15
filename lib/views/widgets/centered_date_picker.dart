@@ -237,8 +237,8 @@ class _CenteredDatePickerState extends State<CenteredDatePicker> {
                     final isCenter = _isCenter(date);
                     final isSelected = _isSelected(date);
                     final hasRecord = _hasRecord(date);
-                    final isPast = index < 3; // 과거 날짜
-                    final isFuture = index > 3; // 미래 날짜
+                    // final isPast = index < 3; // 과거 날짜
+                    // final isFuture = index > 3; // 미래 날짜
 
                     return GestureDetector(
                       onTap: () {

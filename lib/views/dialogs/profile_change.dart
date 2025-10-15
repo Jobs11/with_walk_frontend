@@ -56,13 +56,14 @@ class __ProfileChangeDialogState extends State<_ProfileChangeDialog> {
     } catch (e) {
       if (!mounted) return;
       Fluttertoast.showToast(
-        msg: "프로필 사진 변경 실패! $e",
+        msg: "프로필 사진 변경 실패!",
         toastLength: Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
         gravity: ToastGravity.BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
         backgroundColor: const Color(0xAA000000), // 반투명 검정
         textColor: Colors.white,
         fontSize: 16.0.sp,
       );
+      debugPrint('에러: $e');
     } finally {}
   }
 

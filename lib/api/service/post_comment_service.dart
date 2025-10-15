@@ -15,49 +15,17 @@ class PostCommentService {
     try {
       final currentUserId = CurrentUser.instance.member?.mId ?? '';
 
-      debugPrint('📤 API 요청 시작');
-      debugPrint('   - URL: ${Baseurl.b}$manual/comment-writer/$pNum');
-      debugPrint('   - user_id: $currentUserId');
-
       final response = await http.get(
         Uri.parse('${Baseurl.b}$manual/comment-writer/$pNum'),
         headers: {'Content-Type': 'application/json', 'user_id': currentUserId},
       );
 
-      print('📥 응답 상태: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
-
-        // 🔍 백엔드 응답 원본 확인
-        debugPrint('📦 백엔드 응답 원본:');
-        debugPrint(response.body);
-
-        debugPrint('\n🔍 각 댓글 데이터:');
-        for (var json in jsonList) {
-          debugPrint('─────────────────────────────');
-          debugPrint('  pc_num: ${json['pcNum']}');
-          debugPrint('  pc_content: ${json['pcContent']}');
-          debugPrint('  author_name: ${json['authorName']}');
-          debugPrint('  is_liked: ${json['isLiked']}');
-          debugPrint('  like_count: ${json['likeCount']}');
-          debugPrint(
-            '  is_liked_by_author: ${json['is_liked_by_author']}',
-          ); // 👈 핵심!
-          debugPrint('  타입: ${json['is_liked_by_author'].runtimeType}');
-        }
-        debugPrint('─────────────────────────────\n');
 
         final comments = jsonList
             .map((json) => PostComment.fromJson(json))
             .toList();
-
-        debugPrint('✅ 파싱된 댓글 객체:');
-        for (var comment in comments) {
-          debugPrint(
-            '  댓글 ${comment.pcNum}: isLikedByAuthor=${comment.isLikedByAuthor}',
-          );
-        }
 
         return comments;
       } else {
