@@ -39,8 +39,9 @@ Widget inputdata(
   String title,
   TextEditingController controller,
   ThemeColors colors,
-  double ws,
-) {
+  double ws, {
+  void Function(String)? onChange, // ✅ 추가된 매개변수
+}) {
   // 비밀번호 필드 여부 확인
   bool isPasswordField = title.contains('비밀번호');
 
@@ -75,6 +76,7 @@ Widget inputdata(
         ),
       ),
       style: TextStyle(fontSize: 16.sp),
+      onChanged: onChange, // ✅ 외부 콜백 연결
     ),
   );
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:with_walk/api/model/member_nickname.dart';
 import 'package:with_walk/api/model/post_comment.dart';
+import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/api/service/post_comment_service.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/theme/colors.dart';
@@ -21,21 +23,90 @@ class CommentBottomSheet extends StatefulWidget {
   State<CommentBottomSheet> createState() => _CommentBottomSheetState();
 }
 
+// comment_bottom_sheet.dart 수정
+
 class _CommentBottomSheetState extends State<CommentBottomSheet> {
   final _commentController = TextEditingController();
   late Future<List<PostComment>> _commentsFuture;
   bool _isSubmitting = false;
 
+  // 태그 관련 추가
+  List<MemberNickname> _searchResults = [];
+  final List<String> _taggedNicknames = [];
+  bool _showTagSuggestions = false;
+
   @override
   void initState() {
     super.initState();
     _loadComments();
+    _commentController.addListener(_onTextChanged);
   }
 
   void _loadComments() {
     setState(() {
       _commentsFuture = PostCommentService.getCommentList(widget.pNum);
     });
+  }
+
+  // @ 입력 감지 및 검색
+  void _onTextChanged() {
+    final text = _commentController.text;
+    final cursorPos = _commentController.selection.baseOffset;
+
+    if (cursorPos <= 0) return;
+
+    final beforeCursor = text.substring(0, cursorPos);
+    final lastAtIndex = beforeCursor.lastIndexOf('@');
+
+    if (lastAtIndex != -1) {
+      final afterAt = beforeCursor.substring(lastAtIndex + 1);
+      if (!afterAt.contains(' ') && !afterAt.contains('\n')) {
+        setState(() => _showTagSuggestions = true);
+        _searchNicknames(afterAt);
+      } else {
+        setState(() => _showTagSuggestions = false);
+      }
+    } else {
+      setState(() => _showTagSuggestions = false);
+    }
+  }
+
+  Future<void> _searchNicknames(String query) async {
+    if (query.isEmpty) {
+      setState(() => _searchResults = []);
+      return;
+    }
+
+    try {
+      final results = await Memberservice.searchList(query);
+      setState(() => _searchResults = results);
+    } catch (e) {
+      debugPrint('닉네임 검색 실패: $e');
+    }
+  }
+
+  void _selectNickname(String nickname) {
+    final text = _commentController.text;
+    final cursorPos = _commentController.selection.baseOffset;
+    final lastAtIndex = text.lastIndexOf('@', cursorPos - 1);
+
+    if (lastAtIndex != -1) {
+      final newText =
+          '${text.substring(0, lastAtIndex)}@$nickname ${text.substring(cursorPos)}';
+
+      _commentController.text = newText;
+      _commentController.selection = TextSelection.fromPosition(
+        TextPosition(offset: lastAtIndex + nickname.length + 2),
+      );
+
+      setState(() {
+        if (!_taggedNicknames.contains(nickname)) {
+          _taggedNicknames.add(nickname);
+        }
+        _showTagSuggestions = false;
+        _searchResults = [];
+      });
+    }
   }
 
   Future<void> _submitComment() async {
@@ -56,11 +127,14 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
         pcDate: DateTime.now().toIso8601String(),
       );
 
+      debugPrint("태그된 사용자: $_taggedNicknames");
+
       await PostCommentService.createComment(comment);
 
       if (!mounted) return;
 
       _commentController.clear();
+      _taggedNicknames.clear(); // 태그 목록 초기화
       _loadComments();
       widget.onCommentChanged();
 
@@ -97,7 +171,6 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     }
   }
 
-  // 사용자 프로필 표시
   void _showUserProfile(BuildContext context, PostComment comment) {
     showModalBottomSheet(
       context: context,
@@ -111,8 +184,103 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     );
   }
 
+  // 댓글 내용에서 태그 강조 표시
+  Widget _buildCommentWithTags(String content, ThemeColors current) {
+    final currentUserNickname = CurrentUser.instance.member?.mNickname;
+    final regex = RegExp(r'@(\w+)');
+    final matches = regex.allMatches(content);
+
+    if (matches.isEmpty) {
+      return Text(
+        content,
+        style: TextStyle(fontSize: 14.sp, color: current.fontThird),
+      );
+    }
+
+    List<InlineSpan> spans = [];
+    int lastIndex = 0;
+
+    for (final match in matches) {
+      if (match.start > lastIndex) {
+        spans.add(
+          TextSpan(
+            text: content.substring(lastIndex, match.start),
+            style: TextStyle(fontSize: 14.sp, color: current.fontThird),
+          ),
+        );
+      }
+
+      final taggedNickname = match.group(1)!;
+      final isCurrentUser = taggedNickname == currentUserNickname;
+
+      spans.add(
+        WidgetSpan(
+          child: GestureDetector(
+            onTap: () => _showTaggedUserProfile(context, taggedNickname),
+            child: Text(
+              '@$taggedNickname',
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: isCurrentUser ? Colors.red : current.accent,
+                fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.w600,
+                backgroundColor: isCurrentUser
+                    ? Colors.red.withValues(alpha: 0.1)
+                    : null,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      lastIndex = match.end;
+    }
+
+    if (lastIndex < content.length) {
+      spans.add(
+        TextSpan(
+          text: content.substring(lastIndex),
+          style: TextStyle(fontSize: 14.sp, color: current.fontThird),
+        ),
+      );
+    }
+
+    return RichText(text: TextSpan(children: spans));
+  }
+
+  // 태그된 사용자 프로필 표시
+  Future<void> _showTaggedUserProfile(
+    BuildContext context,
+    String nickname,
+  ) async {
+    try {
+      final member = await Memberservice.checkNick(nickname);
+
+      if (!mounted) return;
+
+      showModalBottomSheet(
+        // ignore: use_build_context_synchronously
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => UserProfileBottomSheet(
+          userId: member.mId,
+          userName: member.mNickname,
+          userImage: member.mProfileImage,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
+        context,
+      ).showSnackBar(SnackBar(content: Text('사용자 정보를 불러올 수 없습니다')));
+      debugPrint('프로필 로드 실패: $e');
+    }
+  }
+
   @override
   void dispose() {
+    _commentController.removeListener(_onTextChanged);
     _commentController.dispose();
     super.dispose();
   }
@@ -249,13 +417,8 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                                 ],
                               ),
                               SizedBox(height: 4.h),
-                              Text(
-                                comment.pcContent,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: current.fontThird,
-                                ),
-                              ),
+                              // 태그 강조 적용
+                              _buildCommentWithTags(comment.pcContent, current),
                             ],
                           ),
                         ),
@@ -293,42 +456,108 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
               ],
             ),
             child: SafeArea(
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _commentController,
-                      decoration: InputDecoration(
-                        hintText: '댓글을 입력하세요...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24.r),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 10.h,
+                  // 태그된 사용자 표시
+                  if (_taggedNicknames.isNotEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.only(bottom: 8.h),
+                      child: Wrap(
+                        spacing: 6.w,
+                        runSpacing: 6.h,
+                        children: _taggedNicknames.map((nickname) {
+                          return Chip(
+                            label: Text(
+                              '@$nickname',
+                              style: TextStyle(fontSize: 11.sp),
+                            ),
+                            deleteIcon: Icon(Icons.close, size: 14.sp),
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            onDeleted: () {
+                              setState(() {
+                                _taggedNicknames.remove(nickname);
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ),
+
+                  // 닉네임 검색 결과
+                  if (_showTagSuggestions && _searchResults.isNotEmpty)
+                    Container(
+                      margin: EdgeInsets.only(bottom: 8.h),
+                      constraints: BoxConstraints(maxHeight: 150.h),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: _searchResults.length,
+                        separatorBuilder: (_, __) => Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final nickname = _searchResults[index].mNickname;
+                          return ListTile(
+                            dense: true,
+                            leading: Icon(
+                              Icons.person,
+                              color: current.accent,
+                              size: 20.sp,
+                            ),
+                            title: Text(
+                              nickname,
+                              style: TextStyle(fontSize: 13.sp),
+                            ),
+                            onTap: () => _selectNickname(nickname),
+                          );
+                        },
+                      ),
+                    ),
+
+                  // 입력창
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _commentController,
+                          decoration: InputDecoration(
+                            hintText: '댓글을 입력하세요... (@ 로 태그)',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24.r),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 10.h,
+                            ),
+                          ),
+                          maxLines: null,
                         ),
                       ),
-                      maxLines: null,
-                    ),
+                      SizedBox(width: 8.w),
+                      _isSubmitting
+                          ? SizedBox(
+                              width: 40.w,
+                              height: 40.h,
+                              child: const CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : IconButton(
+                              onPressed: _submitComment,
+                              icon: Icon(
+                                Icons.send,
+                                color: current.accent,
+                                size: 24.sp,
+                              ),
+                            ),
+                    ],
                   ),
-                  SizedBox(width: 8.w),
-                  _isSubmitting
-                      ? SizedBox(
-                          width: 40.w,
-                          height: 40.h,
-                          child: const CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : IconButton(
-                          onPressed: _submitComment,
-                          icon: Icon(
-                            Icons.send,
-                            color: current.accent,
-                            size: 24.sp,
-                          ),
-                        ),
                 ],
               ),
             ),

@@ -610,6 +610,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
               if (!mounted) return;
 
               if (latLng == null) {
+                // ignore: use_build_context_synchronously
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('해당 주소를 찾을 수 없습니다. 다시 입력해주세요.')),
                 );
@@ -629,6 +630,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
               await _flyTo(latLng, zoom: 16);
 
               if (mounted) {
+                // ignore: use_build_context_synchronously
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('✅ 위치가 설정되었습니다: $address')),
                 );
@@ -661,6 +663,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
                   if (!mounted) return;
 
                   if (latLng == null) {
+                    // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('해당 주소를 찾을 수 없습니다.')),
                     );

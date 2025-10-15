@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:with_walk/api/model/post.dart';
 import 'package:with_walk/api/model/post_comment.dart';
 import 'package:with_walk/api/model/street.dart';
+import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/api/service/post_comment_service.dart';
 import 'package:with_walk/api/service/post_service.dart';
 import 'package:with_walk/api/service/street_service.dart';
@@ -237,6 +238,38 @@ class _PostCardState extends State<PostCard> {
     );
   }
 
+  // 태그된 사용자 프로필 표시
+  Future<void> _showTaggedUserProfile(
+    BuildContext context,
+    String nickname,
+  ) async {
+    try {
+      // 닉네임으로 사용자 정보 조회 (MemberService에 메서드 필요)
+      final member = await Memberservice.checkNick(nickname);
+
+      if (!mounted) return;
+
+      showModalBottomSheet(
+        // ignore: use_build_context_synchronously
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => UserProfileBottomSheet(
+          userId: member.mId,
+          userName: member.mNickname,
+          userImage: member.mProfileImage,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
+        context,
+      ).showSnackBar(SnackBar(content: Text('사용자 정보를 불러올 수 없습니다')));
+      debugPrint('프로필 로드 실패: $e');
+    }
+  }
+
   // 게시글 삭제 실행
   Future<void> _deletePost() async {
     try {
@@ -331,10 +364,7 @@ class _PostCardState extends State<PostCard> {
           SizedBox(height: 12.h),
 
           // 게시글 내용
-          Text(
-            widget.post.pContent,
-            style: TextStyle(fontSize: 14.sp, color: current.fontThird),
-          ),
+          _buildContentWithTags(widget.post.pContent, current),
 
           // 운동 기록 정보 (r_num이 있을 때)
           if (widget.post.rNum != null) ...[
@@ -541,14 +571,9 @@ class _PostCardState extends State<PostCard> {
                               ],
                             ),
                             SizedBox(height: 2.h),
-                            Text(
+                            _buildCommentPreviewWithTags(
                               comment.pcContent,
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                color: current.fontThird,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                              current,
                             ),
                           ],
                         ),
@@ -578,6 +603,138 @@ class _PostCardState extends State<PostCard> {
           ],
         ],
       ),
+    );
+  }
+
+  // 게시글 내용에서 @닉네임 태그를 감지하고 스타일링
+  Widget _buildContentWithTags(String content, ThemeColors current) {
+    final currentUserNickname = CurrentUser.instance.member?.mNickname;
+    final regex = RegExp(r'@(\w+)');
+    final matches = regex.allMatches(content);
+
+    if (matches.isEmpty) {
+      return Text(
+        content,
+        style: TextStyle(fontSize: 14.sp, color: current.fontThird),
+      );
+    }
+
+    List<InlineSpan> spans = [];
+    int lastIndex = 0;
+
+    for (final match in matches) {
+      if (match.start > lastIndex) {
+        spans.add(
+          TextSpan(
+            text: content.substring(lastIndex, match.start),
+            style: TextStyle(fontSize: 14.sp, color: current.fontThird),
+          ),
+        );
+      }
+
+      final taggedNickname = match.group(1)!;
+      final isCurrentUser = taggedNickname == currentUserNickname;
+
+      spans.add(
+        WidgetSpan(
+          child: GestureDetector(
+            onTap: () => _showTaggedUserProfile(context, taggedNickname),
+            child: Text(
+              '@$taggedNickname',
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: isCurrentUser ? Colors.red : current.accent,
+                fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.w600,
+                backgroundColor: isCurrentUser
+                    ? Colors.red.withValues(alpha: 0.1)
+                    : null,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      lastIndex = match.end;
+    }
+
+    if (lastIndex < content.length) {
+      spans.add(
+        TextSpan(
+          text: content.substring(lastIndex),
+          style: TextStyle(fontSize: 14.sp, color: current.fontThird),
+        ),
+      );
+    }
+
+    return RichText(text: TextSpan(children: spans));
+  }
+
+  // 댓글 미리보기에서 @닉네임 태그를 감지하고 스타일링
+  Widget _buildCommentPreviewWithTags(String content, ThemeColors current) {
+    final currentUserNickname = CurrentUser.instance.member?.mNickname;
+    final regex = RegExp(r'@(\w+)');
+    final matches = regex.allMatches(content);
+
+    if (matches.isEmpty) {
+      return Text(
+        content,
+        style: TextStyle(fontSize: 13.sp, color: current.fontThird),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    List<InlineSpan> spans = [];
+    int lastIndex = 0;
+
+    for (final match in matches) {
+      if (match.start > lastIndex) {
+        spans.add(
+          TextSpan(
+            text: content.substring(lastIndex, match.start),
+            style: TextStyle(fontSize: 13.sp, color: current.fontThird),
+          ),
+        );
+      }
+
+      final taggedNickname = match.group(1)!;
+      final isCurrentUser = taggedNickname == currentUserNickname;
+
+      spans.add(
+        WidgetSpan(
+          child: GestureDetector(
+            onTap: () => _showTaggedUserProfile(context, taggedNickname),
+            child: Text(
+              '@$taggedNickname',
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: isCurrentUser ? Colors.red : current.accent,
+                fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.w600,
+                backgroundColor: isCurrentUser
+                    ? Colors.red.withValues(alpha: 0.1)
+                    : null,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      lastIndex = match.end;
+    }
+
+    if (lastIndex < content.length) {
+      spans.add(
+        TextSpan(
+          text: content.substring(lastIndex),
+          style: TextStyle(fontSize: 13.sp, color: current.fontThird),
+        ),
+      );
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:with_walk/api/model/member.dart';
+
 import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/functions/widegt_fn.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
@@ -31,8 +32,10 @@ class _MembershipScreenState extends State<MembershipScreen> {
   String? paint;
   bool isoverlap = false;
   Member? member;
+  Member? memberNickname;
   String? error;
   bool isLoading = false;
+  bool isNick = false;
 
   @override
   void initState() {
@@ -103,6 +106,27 @@ class _MembershipScreenState extends State<MembershipScreen> {
     }
   }
 
+  Future<void> loadNick(String nickname) async {
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+    try {
+      final result = await Memberservice.checkNick(nickname);
+      setState(() {
+        memberNickname = result;
+      });
+    } catch (e) {
+      setState(() {
+        error = e.toString();
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -149,11 +173,26 @@ class _MembershipScreenState extends State<MembershipScreen> {
                       height: 120.h,
                     ),
                   ),
-                  inputList("아이디", idController),
-                  inputList("비밀번호", passwordController),
-                  inputList("비밀번호 확인", conpasswordController),
-                  inputList("이름", nameController),
-                  inputList("닉네임", nicknameController),
+                  inputList("아이디", idController, (v) {}),
+                  inputList("비밀번호", passwordController, (v) {}),
+                  inputList("비밀번호 확인", conpasswordController, (v) {}),
+                  inputList("이름", nameController, (v) {}),
+                  inputList("닉네임", nicknameController, (v) async {
+                    if (v.isNotEmpty) {
+                      setState(() {
+                        memberNickname = null; // ✅ 새 입력마다 이전 결과 초기화
+                      });
+
+                      await loadNick(v.trim()); // ✅ loadNick이 완료될 때까지 기다림
+                      debugPrint(
+                        'v: $v,   nickname: ${memberNickname?.mNickname}',
+                      );
+
+                      setState(() {
+                        isNick = memberNickname != null ? false : true;
+                      });
+                    }
+                  }),
                   emailInput(),
 
                   SizedBox(height: 24.h),
@@ -165,7 +204,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
                     200,
                     36,
                     () {
-                      if (isoverlap == true) {
+                      if (isoverlap == true && isNick == true) {
                         if (idController.text.isNotEmpty &&
                             passwordController.text.isNotEmpty &&
                             nameController.text.isNotEmpty &&
@@ -197,7 +236,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
                         }
                       } else {
                         Fluttertoast.showToast(
-                          msg: "아이디 중복 검사를 해주세요.",
+                          msg: "아이디 혹은 닉네임 중복 검사를 해주세요.",
                           toastLength:
                               Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
                           gravity:
@@ -218,7 +257,11 @@ class _MembershipScreenState extends State<MembershipScreen> {
     );
   }
 
-  Widget inputList(String title, TextEditingController controller) {
+  Widget inputList(
+    String title,
+    TextEditingController controller,
+    void Function(String)? onChange,
+  ) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
       child: Column(
@@ -226,7 +269,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
         children: [
           Padding(
             padding: EdgeInsets.only(left: 4.w),
-            child: (title == '아이디')
+            child: (title == '아이디' || title == '닉네임')
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -238,65 +281,74 @@ class _MembershipScreenState extends State<MembershipScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      colorbtn(
-                        '중복 확인',
-                        widget.current.accent,
-                        widget.current.bg,
-                        widget.current.accent,
-                        80,
-                        24,
-                        () {
-                          if (idController.text.isNotEmpty) {
-                            loadUser(idController.text.trim());
-                            if (member != null) {
-                              Fluttertoast.showToast(
-                                msg: "중복된 아이디입니다.",
-                                toastLength:
-                                    Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
-                                gravity: ToastGravity
-                                    .BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
-                                backgroundColor: const Color(
-                                  0xAA000000,
-                                ), // 반투명 검정
-                                textColor: Colors.white,
-                                fontSize: 16.0.sp,
-                              );
-                              setState(() {
-                                isoverlap = false;
-                              });
-                            } else {
-                              Fluttertoast.showToast(
-                                msg: "사용 가능한 아이디입니다.",
-                                toastLength:
-                                    Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
-                                gravity: ToastGravity
-                                    .BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
-                                backgroundColor: const Color(
-                                  0xAA000000,
-                                ), // 반투명 검정
-                                textColor: Colors.white,
-                                fontSize: 16.0.sp,
-                              );
-                              setState(() {
-                                isoverlap = true;
-                              });
-                            }
-                          } else {
-                            Fluttertoast.showToast(
-                              msg: "아이디를 입력해주세요.",
-                              toastLength:
-                                  Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
-                              gravity: ToastGravity
-                                  .BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
-                              backgroundColor: const Color(
-                                0xAA000000,
-                              ), // 반투명 검정
-                              textColor: Colors.white,
-                              fontSize: 16.0.sp,
-                            );
-                          }
-                        },
-                      ),
+                      (title == '아이디')
+                          ? colorbtn(
+                              '중복 확인',
+                              widget.current.accent,
+                              widget.current.bg,
+                              widget.current.accent,
+                              80,
+                              24,
+                              () {
+                                if (idController.text.isNotEmpty) {
+                                  loadUser(idController.text.trim());
+                                  if (member != null) {
+                                    Fluttertoast.showToast(
+                                      msg: "중복된 아이디입니다.",
+                                      toastLength: Toast
+                                          .LENGTH_SHORT, // Toast.LENGTH_LONG 가능
+                                      gravity: ToastGravity
+                                          .BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
+                                      backgroundColor: const Color(
+                                        0xAA000000,
+                                      ), // 반투명 검정
+                                      textColor: Colors.white,
+                                      fontSize: 16.0.sp,
+                                    );
+                                    setState(() {
+                                      isoverlap = false;
+                                    });
+                                  } else {
+                                    Fluttertoast.showToast(
+                                      msg: "사용 가능한 아이디입니다.",
+                                      toastLength: Toast
+                                          .LENGTH_SHORT, // Toast.LENGTH_LONG 가능
+                                      gravity: ToastGravity
+                                          .BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
+                                      backgroundColor: const Color(
+                                        0xAA000000,
+                                      ), // 반투명 검정
+                                      textColor: Colors.white,
+                                      fontSize: 16.0.sp,
+                                    );
+                                    setState(() {
+                                      isoverlap = true;
+                                    });
+                                  }
+                                } else {
+                                  Fluttertoast.showToast(
+                                    msg: "아이디를 입력해주세요.",
+                                    toastLength: Toast
+                                        .LENGTH_SHORT, // Toast.LENGTH_LONG 가능
+                                    gravity: ToastGravity
+                                        .BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
+                                    backgroundColor: const Color(
+                                      0xAA000000,
+                                    ), // 반투명 검정
+                                    textColor: Colors.white,
+                                    fontSize: 16.0.sp,
+                                  );
+                                }
+                              },
+                            )
+                          : Text(
+                              isNick ? '사용가능한 닉네임입니다.' : '중복된 닉네임입니다.',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: widget.current.fontThird,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ],
                   )
                 : Text(
@@ -309,7 +361,13 @@ class _MembershipScreenState extends State<MembershipScreen> {
                   ),
           ),
           SizedBox(height: 4.h),
-          inputdata(title, controller, widget.current, double.infinity),
+          inputdata(
+            title,
+            controller,
+            widget.current,
+            double.infinity,
+            onChange: onChange,
+          ),
         ],
       ),
     );

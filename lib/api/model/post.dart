@@ -7,6 +7,7 @@ class Post {
   final String? pImage; // 이미지 URL
   final String pDate;
   final int pLikes;
+  final List<String>? taggedNicknames;
 
   // 추가 필드
   final String? authorName; // ✅ nullable
@@ -28,6 +29,7 @@ class Post {
     this.likeCount = 0,
     this.commentCount = 0,
     this.isLikedByUser = false,
+    this.taggedNicknames,
   });
 
   factory Post.fromJson(Map<String, dynamic> json) => Post(
@@ -53,5 +55,6 @@ class Post {
     if (pImage != null) 'pimage': pImage,
     'pdate': pDate,
     'plikes': pLikes,
+    if (taggedNicknames != null) 'taggedNicknames': taggedNicknames,
   };
 }
