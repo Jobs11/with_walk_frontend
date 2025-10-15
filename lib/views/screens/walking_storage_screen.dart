@@ -3,7 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:with_walk/api/model/street.dart';
+import 'package:with_walk/api/model/weekly_goal.dart';
 import 'package:with_walk/api/service/street_service.dart';
+import 'package:with_walk/api/service/weekly_goal_service.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/functions/state_fn.dart';
 import 'package:with_walk/theme/colors.dart';
@@ -23,12 +25,15 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
   Map<DateTime, bool> recordDates = {};
 
   late Future<List<Street>> streets;
+  WeeklyGoal? weeklyGoal; // 주간 목표
+  double weeklyTotalKm = 0.0; // 이번 주 총 거리
 
   @override
   void initState() {
     super.initState();
     current = themeMap["라이트"]!;
     _loadRecordDates();
+    _loadWeeklyGoal();
     streets = StreetService.getStreetList(
       CurrentUser.instance.member!.mId,
       '${selectedDate.month}-${selectedDate.day}',
@@ -41,60 +46,153 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
         CurrentUser.instance.member!.mId,
       );
 
-      // ✅ 중복 없는 날짜 집합
       final Set<DateTime> dateSet = {};
 
       for (var record in records) {
         if (record.rDate == null) continue;
-
         final date = DateTime.parse(record.rDate.toString());
-
-        // 시, 분, 초 제거 → 하루 단위로 통일
         final normalized = DateTime(date.year, date.month, date.day);
-
-        // Set은 중복 자동 제거됨
         dateSet.add(normalized);
       }
 
-      // ✅ Map으로 변환 (캘린더에서 true/false로 쓰기 위함)
       setState(() {
         recordDates = {for (var d in dateSet) d: true};
       });
 
-      debugPrint("📅 기록 날짜 ${recordDates.keys}");
+      // 주간 총 거리 계산
+      _calculateWeeklyTotal(records);
     } catch (e, st) {
       debugPrint('⚠️ _loadRecordDates() 오류: $e');
       debugPrint('$st');
     }
   }
 
+  // 이번 주 총 거리 계산
+  void _calculateWeeklyTotal(List<Street> records) {
+    final monday = WeeklyGoalService.getCurrentMondayDate();
+    final sunday = WeeklyGoalService.getCurrentSundayDate();
+
+    double total = 0.0;
+    for (var record in records) {
+      if (record.rDate == null) continue;
+      final date = DateTime.parse(record.rDate.toString());
+      final normalized = DateTime(date.year, date.month, date.day);
+
+      // 이번 주 범위 내인지 확인
+      if ((normalized.isAfter(monday) || normalized.isAtSameMomentAs(monday)) &&
+          (normalized.isBefore(sunday) ||
+              normalized.isAtSameMomentAs(sunday))) {
+        total += double.tryParse(record.rDistance.toString()) ?? 0.0;
+      }
+    }
+
+    setState(() {
+      weeklyTotalKm = total;
+    });
+
+    debugPrint('📊 이번 주 총 거리: $weeklyTotalKm km');
+  }
+
+  // 주간 목표 불러오기
+  Future<void> _loadWeeklyGoal() async {
+    try {
+      final goal = await WeeklyGoalService.getCurrentWeeklyGoal(
+        CurrentUser.instance.member!.mId,
+      );
+      setState(() {
+        weeklyGoal = goal;
+      });
+      debugPrint('🎯 주간 목표: ${goal.wgGoalKm} km');
+    } catch (e) {
+      debugPrint('⚠️ 주간 목표 조회 오류: $e');
+    }
+  }
+
+  // 주간 목표 설정 다이얼로그
+  Future<void> _showGoalDialog() async {
+    final TextEditingController controller = TextEditingController(
+      text: weeklyGoal?.wgGoalKm.toString() ?? '0',
+    );
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          '주간 목표 설정',
+          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+        ),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: '목표 거리 (km)',
+            hintText: '예: 20',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('취소', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final goalKm = double.tryParse(controller.text) ?? 0.0;
+              if (goalKm <= 0) {
+                Fluttertoast.showToast(msg: '0보다 큰 값을 입력하세요');
+                return;
+              }
+
+              try {
+                await WeeklyGoalService.setWeeklyGoal(
+                  CurrentUser.instance.member!.mId,
+                  goalKm,
+                );
+                await _loadWeeklyGoal();
+                if (!mounted) return;
+                Navigator.pop(context);
+                Fluttertoast.showToast(msg: '주간 목표가 설정되었습니다!');
+              } catch (e) {
+                Fluttertoast.showToast(msg: '목표 설정 실패: $e');
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: current.accent),
+            child: Text('설정', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _update(int rNum) async {
     try {
-      debugPrint('계: $rNum');
       await StreetService.deleteS(rNum);
-      // 서버는 200/201만 주면 OK
-
       if (!mounted) return;
       Fluttertoast.showToast(
         msg: "발자취 삭제 완료!",
-        toastLength: Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
-        gravity: ToastGravity.BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
-        backgroundColor: const Color(0xAA000000), // 반투명 검정
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: const Color(0xAA000000),
         textColor: Colors.white,
         fontSize: 16.0.sp,
       );
+
+      // 삭제 후 주간 총 거리 다시 계산
+      await _loadRecordDates();
     } catch (e) {
       if (!mounted) return;
       Fluttertoast.showToast(
         msg: "발자취 삭제 실패!",
-        toastLength: Toast.LENGTH_SHORT, // Toast.LENGTH_LONG 가능
-        gravity: ToastGravity.BOTTOM, // 위치 (TOP, CENTER, BOTTOM)
-        backgroundColor: const Color(0xAA000000), // 반투명 검정
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: const Color(0xAA000000),
         textColor: Colors.white,
         fontSize: 16.0.sp,
       );
       debugPrint('발자취: $e');
-    } finally {}
+    }
   }
 
   @override
@@ -123,6 +221,11 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
               padding: EdgeInsets.all(16.w),
               child: Column(
                 children: [
+                  // 🎯 주간 목표 위젯
+                  _buildWeeklyGoalWidget(),
+
+                  SizedBox(height: 20.h),
+
                   // 날짜 선택기
                   CenteredDatePicker(
                     recordDates: recordDates,
@@ -148,6 +251,115 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // 🎯 주간 목표 위젯
+  Widget _buildWeeklyGoalWidget() {
+    final goalKm = weeklyGoal?.wgGoalKm ?? 0.0;
+    final progress = goalKm > 0
+        ? (weeklyTotalKm / goalKm).clamp(0.0, 1.0)
+        : 0.0;
+    final percentage = (progress * 100).toInt();
+
+    return GestureDetector(
+      onTap: _showGoalDialog,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(20.w),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [current.accent, current.accent.withOpacity(0.7)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20.r),
+          boxShadow: [
+            BoxShadow(
+              color: current.accent.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '이번 주 목표',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Icon(Icons.edit, size: 20.sp, color: Colors.white70),
+              ],
+            ),
+            SizedBox(height: 12.h),
+
+            // 목표 거리
+            Text(
+              '목표: ${goalKm.toStringAsFixed(1)} km',
+              style: TextStyle(fontSize: 14.sp, color: Colors.white70),
+            ),
+            SizedBox(height: 8.h),
+
+            // 현재 거리
+            Row(
+              children: [
+                Text(
+                  '${weeklyTotalKm.toStringAsFixed(1)}',
+                  style: TextStyle(
+                    fontSize: 32.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                Text(
+                  'km',
+                  style: TextStyle(fontSize: 16.sp, color: Colors.white70),
+                ),
+                const Spacer(),
+                Text(
+                  '$percentage%',
+                  style: TextStyle(
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+
+            // 프로그레스 바
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10.r),
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor: Colors.white.withOpacity(0.3),
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                minHeight: 8.h,
+              ),
+            ),
+            SizedBox(height: 8.h),
+
+            // 남은 거리
+            if (goalKm > 0)
+              Text(
+                weeklyTotalKm >= goalKm
+                    ? '🎉 목표 달성!'
+                    : '남은 거리: ${(goalKm - weeklyTotalKm).toStringAsFixed(1)} km',
+                style: TextStyle(fontSize: 12.sp, color: Colors.white70),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -221,11 +433,9 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
           );
         }
 
-        // ✅ 해결: Column 대신 ListView.builder 직접 사용
         return ListView.builder(
-          itemCount: items.length + 1, // 제목용 +1
+          itemCount: items.length + 1,
           itemBuilder: (context, index) {
-            // 첫 번째 아이템은 제목
             if (index == 0) {
               return Padding(
                 padding: EdgeInsets.only(bottom: 12.h),
@@ -239,8 +449,6 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
                 ),
               );
             }
-
-            // 나머지는 카드
             return _buildRecordCard(items[index - 1]);
           },
         );

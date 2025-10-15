@@ -88,6 +88,28 @@ class _CenteredDatePickerState extends State<CenteredDatePicker> {
     );
   }
 
+  // ✅ 토요일인지 확인
+  bool _isSaturday(DateTime date) {
+    return date.weekday == DateTime.saturday;
+  }
+
+  // ✅ 일요일인지 확인
+  bool _isSunday(DateTime date) {
+    return date.weekday == DateTime.sunday;
+  }
+
+  // ✅ 요일별 색상 가져오기
+  Color _getWeekdayColor(DateTime date, bool isCenter) {
+    if (isCenter) return current.bg; // 중심 날짜는 배경색
+
+    if (_isSaturday(date)) {
+      return Colors.blue; // 토요일 파란색
+    } else if (_isSunday(date)) {
+      return Colors.red; // 일요일 빨간색
+    }
+    return current.fontThird; // 평일 기본 색상
+  }
+
   // ✅ 요일 이름 가져오기 (한국어)
   String _getWeekdayName(DateTime date) {
     const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
@@ -248,31 +270,23 @@ class _CenteredDatePickerState extends State<CenteredDatePicker> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // 요일
+                            // 요일 (✅ 토요일/일요일 색상 적용)
                             Text(
                               _getWeekdayName(date),
                               style: TextStyle(
                                 fontSize: isCenter ? 11.sp : 10.sp,
-                                color: isCenter
-                                    ? current.bg
-                                    : isPast
-                                    ? current.fontPrimary
-                                    : isFuture
-                                    ? current.fontSecondary
-                                    : current.fontThird,
+                                color: _getWeekdayColor(date, isCenter),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             SizedBox(height: 4.h),
 
-                            // 날짜
+                            // 날짜 (✅ 토요일/일요일 색상 적용)
                             Text(
                               '${date.day}',
                               style: TextStyle(
                                 fontSize: isCenter ? 20.sp : 16.sp,
-                                color: isCenter
-                                    ? current.bg
-                                    : current.fontThird,
+                                color: _getWeekdayColor(date, isCenter),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
