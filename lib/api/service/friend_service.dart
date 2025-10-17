@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:with_walk/api/model/friendship.dart';
 import 'package:with_walk/functions/data.dart';
@@ -94,9 +95,11 @@ class FriendService {
 
     final response = await http.get(url).timeout(const Duration(seconds: 10));
 
+    debugPrint('status: ${response.statusCode}');
+    debugPrint('body: ${response.body}');
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
-      return data.map((e) => e['from_user_id'] as String).toList();
+      return data.map((e) => e['fromUserId'] as String).toList();
     }
     throw Exception('팔로워 목록 조회 실패: ${response.statusCode}');
   }
@@ -107,9 +110,11 @@ class FriendService {
 
     final response = await http.get(url).timeout(const Duration(seconds: 10));
 
+    debugPrint('status: ${response.statusCode}');
+    debugPrint('body: ${response.body}');
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
-      return data.map((e) => e['to_user_id'] as String).toList();
+      return data.map((e) => e['toUserId'] as String).toList();
     }
     throw Exception('팔로잉 목록 조회 실패: ${response.statusCode}');
   }

@@ -10,7 +10,7 @@ class Memberservice {
   static const String menual = "member";
   static const String registerUser = "register";
   static const String getUser = "getUser";
-  static const String getUserdata = "getUserdata";
+  static const String getUserdata = "getUserData";
   static const String modifyUser = "modify";
   static const String deleteUser = "delete";
   static const String modifyProfile = "updateProfile";

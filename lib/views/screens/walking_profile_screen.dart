@@ -11,6 +11,8 @@ import 'package:with_walk/views/dialogs/profile_change.dart';
 import 'package:with_walk/views/screens/customer_center_screen.dart';
 import 'package:with_walk/views/screens/login_screen.dart';
 import 'package:with_walk/views/screens/membership_update_screen.dart';
+import 'package:with_walk/views/widgets/follower_list_screen.dart';
+import 'package:with_walk/views/widgets/following_list_screen.dart';
 import 'package:with_walk/views/widgets/user_profile_bottom_sheet.dart';
 
 class WalkingProfileScreen extends StatefulWidget {
@@ -165,13 +167,29 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildStatColumn('팔로워', followerCount),
+                        GestureDetector(
+                          onTap: () {
+                            showFollowerDialog(
+                              context,
+                              CurrentUser.instance.member!.mId,
+                            );
+                          },
+                          child: _buildStatColumn('팔로워', followerCount),
+                        ),
                         Container(
                           width: 1,
                           height: 30.h,
                           color: Colors.grey[300],
                         ),
-                        _buildStatColumn('팔로잉', followingCount),
+                        GestureDetector(
+                          onTap: () {
+                            showFollowingDialog(
+                              context,
+                              CurrentUser.instance.member!.mId,
+                            );
+                          },
+                          child: _buildStatColumn('팔로잉', followingCount),
+                        ),
                         Container(
                           width: 1,
                           height: 30.h,
