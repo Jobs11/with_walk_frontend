@@ -7,7 +7,8 @@ import 'package:with_walk/api/service/street_service.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/functions/state_fn.dart';
 import 'package:with_walk/theme/colors.dart';
-import 'package:with_walk/views/widgets/follower_list_screen.dart';
+import 'package:with_walk/views/widgets/follower_dialog.dart';
+import 'package:with_walk/views/widgets/following_dialog.dart';
 
 class UserProfileBottomSheet extends StatefulWidget {
   final String userId;
@@ -241,7 +242,7 @@ class _UserProfileBottomSheetState extends State<UserProfileBottomSheet> {
                       SizedBox(width: 32.w),
                       GestureDetector(
                         onTap: () {
-                          showFollowerDialog(context, widget.userId);
+                          showFollowingDialog(context, widget.userId);
                         },
                         child: _buildFollowStat('팔로잉', followingCount),
                       ),

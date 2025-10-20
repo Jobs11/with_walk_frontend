@@ -11,8 +11,8 @@ import 'package:with_walk/views/dialogs/profile_change.dart';
 import 'package:with_walk/views/screens/customer_center_screen.dart';
 import 'package:with_walk/views/screens/login_screen.dart';
 import 'package:with_walk/views/screens/membership_update_screen.dart';
-import 'package:with_walk/views/widgets/follower_list_screen.dart';
-import 'package:with_walk/views/widgets/following_list_screen.dart';
+import 'package:with_walk/views/widgets/follower_dialog.dart';
+import 'package:with_walk/views/widgets/following_dialog.dart';
 import 'package:with_walk/views/widgets/user_profile_bottom_sheet.dart';
 
 class WalkingProfileScreen extends StatefulWidget {

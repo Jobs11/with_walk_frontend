@@ -63,6 +63,7 @@ class _CreatePostBottomSheetState extends State<CreatePostBottomSheet> {
       final afterAt = beforeCursor.substring(lastAtIndex + 1);
       if (!afterAt.contains(' ') && !afterAt.contains('\n')) {
         setState(() => _showTagSuggestions = true);
+
         _searchNicknames(afterAt);
       } else {
         setState(() => _showTagSuggestions = false);

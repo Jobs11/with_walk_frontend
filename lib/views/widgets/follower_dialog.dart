@@ -1,46 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:with_walk/api/model/member.dart';
 import 'package:with_walk/api/service/friend_service.dart';
 import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/views/widgets/user_profile_bottom_sheet.dart';
 
-void showFollowingDialog(BuildContext context, String userId) {
+void showFollowerDialog(BuildContext context, String userId) {
   showDialog(
     context: context,
-    builder: (context) => FollowingDialog(userId: userId),
+    builder: (context) => FollowerDialog(userId: userId),
   );
 }
 
-class FollowingDialog extends StatefulWidget {
+class FollowerDialog extends StatefulWidget {
   final String userId;
 
-  const FollowingDialog({super.key, required this.userId});
+  const FollowerDialog({super.key, required this.userId});
 
   @override
-  State<FollowingDialog> createState() => _FollowingDialogState();
+  State<FollowerDialog> createState() => _FollowerDialogState();
 }
 
-class _FollowingDialogState extends State<FollowingDialog> {
-  List<String> following = [];
+class _FollowerDialogState extends State<FollowerDialog> {
+  List<Member> followers = [];
   bool isLoading = true;
   String? errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _loadFollowing();
+    _loadFollowers();
   }
 
-  Future<void> _loadFollowing() async {
+  Future<void> _loadFollowers() async {
     try {
       setState(() {
         isLoading = true;
         errorMessage = null;
       });
 
-      final result = await FriendService.getFollowing(widget.userId);
+      final result = await FriendService.getFollowers(widget.userId);
+      for (String id in result) {
+        final user = await Memberservice.userdata(id);
+        followers.add(user);
+      }
 
       setState(() {
-        following = result;
         isLoading = false;
       });
     } catch (e) {
@@ -80,7 +84,7 @@ class _FollowingDialogState extends State<FollowingDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  '팔로잉',
+                  '팔로워',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 IconButton(
@@ -116,41 +120,35 @@ class _FollowingDialogState extends State<FollowingDialog> {
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton(
-                            onPressed: _loadFollowing,
+                            onPressed: _loadFollowers,
                             child: const Text('다시 시도'),
                           ),
                         ],
                       ),
                     )
-                  : following.isEmpty
+                  : followers.isEmpty
                   ? Center(
                       child: Text(
-                        '팔로잉한 사용자가 없습니다',
+                        '팔로워가 없습니다',
                         style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                     )
                   : ListView.builder(
-                      itemCount: following.length,
+                      itemCount: followers.length,
                       itemBuilder: (context, index) {
-                        final followingId = following[index];
+                        final user = followers[index];
                         return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.green[100],
-                            child: Text(
-                              followingId[0].toUpperCase(),
-                              style: TextStyle(
-                                color: Colors.green[700],
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                          leading: Image.asset(
+                            user.mProfileImage ??
+                                'assets/images/icons/user.png',
                           ),
-                          title: Text(followingId),
+                          title: Text(user.mNickname),
                           trailing: const Icon(
                             Icons.chevron_right,
                             color: Colors.grey,
                           ),
                           onTap: () {
-                            _showUserProfile(context, followingId);
+                            _showUserProfile(context, user.mId);
                             Navigator.pop(context);
                           },
                         );

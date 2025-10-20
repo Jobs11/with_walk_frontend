@@ -95,8 +95,10 @@ class Memberservice {
       for (var member in members) {
         memberInstances.add(MemberNickname.fromJson(member));
       }
+
       return memberInstances;
     }
+
     throw Error();
   }
 

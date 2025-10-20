@@ -4,6 +4,6 @@ class MemberNickname {
   MemberNickname({required this.mNickname});
 
   factory MemberNickname.fromJson(Map<String, dynamic> json) {
-    return MemberNickname(mNickname: json['m_nickname']);
+    return MemberNickname(mNickname: json['mnickname']);
   }
 }
