@@ -13,6 +13,7 @@ import 'package:with_walk/views/screens/login_screen.dart';
 import 'package:with_walk/views/screens/membership_update_screen.dart';
 import 'package:with_walk/views/widgets/follower_dialog.dart';
 import 'package:with_walk/views/widgets/following_dialog.dart';
+import 'package:with_walk/views/widgets/smart_profile_image.dart';
 import 'package:with_walk/views/widgets/user_profile_bottom_sheet.dart';
 
 class WalkingProfileScreen extends StatefulWidget {
@@ -127,12 +128,13 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
                         border: Border.all(color: current.accent, width: 3),
                       ),
                       child: ClipOval(
-                        child: Image.asset(
-                          CurrentUser.instance.member?.mProfileImage ??
+                        child: SmartProfileImage(
+                          imageUrl:
+                              CurrentUser.instance.member?.mProfileImage ??
                               'assets/images/icons/user.png',
+                          width: 120.w,
+                          height: 120.h,
                           fit: BoxFit.cover,
-                          width: 100.w,
-                          height: 100.h,
                         ),
                       ),
                     ),

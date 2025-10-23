@@ -14,6 +14,7 @@ import 'package:with_walk/functions/state_fn.dart';
 import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/widgets/comment_bottom_sheet.dart';
 import 'package:with_walk/views/widgets/edit_post_bottom_sheet.dart';
+import 'package:with_walk/views/widgets/smart_profile_image.dart';
 import 'package:with_walk/views/widgets/user_profile_bottom_sheet.dart';
 
 class PostCard extends StatefulWidget {
@@ -371,10 +372,12 @@ class _PostCardState extends State<PostCard> {
             children: [
               GestureDetector(
                 onTap: () => _showUserProfile(context),
-                child: Image.asset(
-                  widget.post.authorImage ?? 'assets/images/icons/user.png',
+                child: SmartProfileImage(
+                  imageUrl:
+                      widget.post.authorImage ?? 'assets/images/icons/user.png',
                   width: 40.w,
                   height: 40.h,
+                  fit: BoxFit.cover,
                 ),
               ),
               SizedBox(width: 12.w),
@@ -595,10 +598,13 @@ class _PostCardState extends State<PostCard> {
                       // 작은 프로필 이미지
                       GestureDetector(
                         onTap: () => _showCommentUserProfile(context, comment),
-                        child: Image.asset(
-                          comment.authorImage ?? 'assets/images/icons/user.png',
+                        child: SmartProfileImage(
+                          imageUrl:
+                              comment.authorImage ??
+                              'assets/images/icons/user.png',
                           width: 24.w,
                           height: 24.h,
+                          fit: BoxFit.cover,
                         ),
                       ),
                       SizedBox(width: 8.w),
@@ -686,12 +692,15 @@ class _PostCardState extends State<PostCard> {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Image.asset(
-                                          widget.post.authorImage ??
+                                        SmartProfileImage(
+                                          imageUrl:
+                                              widget.post.authorImage ??
                                               'assets/images/icons/user.png',
                                           width: 12.w,
                                           height: 12.h,
+                                          fit: BoxFit.cover,
                                         ),
+
                                         SizedBox(width: 2.w),
                                         Icon(
                                           Icons.favorite,

@@ -49,144 +49,146 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(43.h),
-        child: WithWalkAppbar(
-          titlename: "챌린지 생성",
-          isBack: true,
-          current: current,
-        ),
-      ),
-      body: Stack(
-        children: [
-          // 배경
-          Positioned.fill(
-            child: Image.asset(
-              "assets/images/bgs/background.png",
-              fit: BoxFit.cover,
-            ),
+    return SafeArea(
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(43.h),
+          child: WithWalkAppbar(
+            titlename: "챌린지 생성",
+            isBack: true,
+            current: current,
           ),
+        ),
+        body: Stack(
+          children: [
+            // 배경
+            Positioned.fill(
+              child: Image.asset(
+                "assets/images/bgs/background.png",
+                fit: BoxFit.cover,
+              ),
+            ),
 
-          // 메인 콘텐츠
-          SafeArea(
-            child: Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(16.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 제목
-                    _buildTextField(
-                      controller: _titleController,
-                      label: '챌린지 제목',
-                      hint: '예: 11월 100km 걷기',
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return '제목을 입력해주세요';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // 설명
-                    _buildTextField(
-                      controller: _descriptionController,
-                      label: '챌린지 설명',
-                      hint: '예: 한 달 동안 총 100km를 걸어보세요!',
-                      maxLines: 3,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return '설명을 입력해주세요';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // 챌린지 타입
-                    _buildSectionTitle('챌린지 타입'),
-                    SizedBox(height: 8.h),
-                    _buildTypeSelector(),
-                    SizedBox(height: 16.h),
-
-                    // 목표값
-                    _buildTextField(
-                      controller: _targetValueController,
-                      label: '목표값',
-                      hint: '예: 100',
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return '목표값을 입력해주세요';
-                        }
-                        if (int.tryParse(value) == null) {
-                          return '숫자만 입력해주세요';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // 단위
-                    _buildSectionTitle('단위'),
-                    SizedBox(height: 8.h),
-                    _buildUnitSelector(),
-                    SizedBox(height: 16.h),
-
-                    // 시작일
-                    _buildDateSelector(
-                      label: '시작일',
-                      date: _startDate,
-                      onTap: () => _selectDate(context, true),
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // 종료일
-                    _buildDateSelector(
-                      label: '종료일',
-                      date: _endDate,
-                      onTap: () => _selectDate(context, false),
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // 보상
-                    _buildRewardField(),
-                    SizedBox(height: 32.h),
-
-                    // 생성 버튼
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50.h,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _createChallenge,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: current.accent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? CircularProgressIndicator(color: current.bg)
-                            : Text(
-                                '챌린지 생성',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: current.bg,
-                                ),
-                              ),
+            // 메인 콘텐츠
+            SafeArea(
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(16.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 제목
+                      _buildTextField(
+                        controller: _titleController,
+                        label: '챌린지 제목',
+                        hint: '예: 11월 100km 걷기',
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return '제목을 입력해주세요';
+                          }
+                          return null;
+                        },
                       ),
-                    ),
-                  ],
+                      SizedBox(height: 16.h),
+
+                      // 설명
+                      _buildTextField(
+                        controller: _descriptionController,
+                        label: '챌린지 설명',
+                        hint: '예: 한 달 동안 총 100km를 걸어보세요!',
+                        maxLines: 3,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return '설명을 입력해주세요';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // 챌린지 타입
+                      _buildSectionTitle('챌린지 타입'),
+                      SizedBox(height: 8.h),
+                      _buildTypeSelector(),
+                      SizedBox(height: 16.h),
+
+                      // 목표값
+                      _buildTextField(
+                        controller: _targetValueController,
+                        label: '목표값',
+                        hint: '예: 100',
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return '목표값을 입력해주세요';
+                          }
+                          if (int.tryParse(value) == null) {
+                            return '숫자만 입력해주세요';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // 단위
+                      _buildSectionTitle('단위'),
+                      SizedBox(height: 8.h),
+                      _buildUnitSelector(),
+                      SizedBox(height: 16.h),
+
+                      // 시작일
+                      _buildDateSelector(
+                        label: '시작일',
+                        date: _startDate,
+                        onTap: () => _selectDate(context, true),
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // 종료일
+                      _buildDateSelector(
+                        label: '종료일',
+                        date: _endDate,
+                        onTap: () => _selectDate(context, false),
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // 보상
+                      _buildRewardField(),
+                      SizedBox(height: 32.h),
+
+                      // 생성 버튼
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50.h,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _createChallenge,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: current.accent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? CircularProgressIndicator(color: current.bg)
+                              : Text(
+                                  '챌린지 생성',
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: current.bg,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

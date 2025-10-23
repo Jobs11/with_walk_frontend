@@ -51,56 +51,58 @@ class _NoticeListScreenState extends State<NoticeListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          '공지사항',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            '공지사항',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : noticeList.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.notifications_outlined,
+                      size: 64.sp,
+                      color: Colors.grey,
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      '공지사항이 없습니다',
+                      style: TextStyle(fontSize: 16.sp, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: _loadNotices,
+                child: ListView.separated(
+                  padding: EdgeInsets.all(16.w),
+                  itemCount: noticeList.length,
+                  separatorBuilder: (context, index) => SizedBox(height: 12.h),
+                  itemBuilder: (context, index) {
+                    final notice = noticeList[index];
+                    return _buildNoticeCard(notice);
+                  },
+                ),
+              ),
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : noticeList.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.notifications_outlined,
-                    size: 64.sp,
-                    color: Colors.grey,
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    '공지사항이 없습니다',
-                    style: TextStyle(fontSize: 16.sp, color: Colors.grey),
-                  ),
-                ],
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _loadNotices,
-              child: ListView.separated(
-                padding: EdgeInsets.all(16.w),
-                itemCount: noticeList.length,
-                separatorBuilder: (context, index) => SizedBox(height: 12.h),
-                itemBuilder: (context, index) {
-                  final notice = noticeList[index];
-                  return _buildNoticeCard(notice);
-                },
-              ),
-            ),
     );
   }
 

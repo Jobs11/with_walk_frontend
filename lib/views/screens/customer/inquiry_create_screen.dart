@@ -84,193 +84,200 @@ class _InquiryCreateScreenState extends State<InquiryCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return SafeArea(
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          '1:1 문의하기',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            '1:1 문의하기',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 안내 문구
-            Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: current.accent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, color: current.accent, size: 20.sp),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Text(
-                      '문의하신 내용은 순차적으로 답변드립니다.\n영업일 기준 1-2일 소요됩니다.',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.black87,
-                        height: 1.4,
+        body: SingleChildScrollView(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 안내 문구
+              Container(
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: current.accent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: current.accent,
+                      size: 20.sp,
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Text(
+                        '문의하신 내용은 순차적으로 답변드립니다.\n영업일 기준 1-2일 소요됩니다.',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: Colors.black87,
+                          height: 1.4,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            SizedBox(height: 24.h),
+              SizedBox(height: 24.h),
 
-            // 카테고리 선택
-            Text(
-              '문의 유형',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+              // 카테고리 선택
+              Text(
+                '문의 유형',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
-            ),
-            SizedBox(height: 12.h),
-            Wrap(
-              spacing: 8.w,
-              runSpacing: 8.h,
-              children: categories
-                  .map(
-                    (category) => GestureDetector(
-                      onTap: () => setState(() => selectedCategory = category),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 10.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: selectedCategory == category
-                              ? current.accent
-                              : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
-                        child: Text(
-                          category,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
+              SizedBox(height: 12.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: categories
+                    .map(
+                      (category) => GestureDetector(
+                        onTap: () =>
+                            setState(() => selectedCategory = category),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 10.h,
+                          ),
+                          decoration: BoxDecoration(
                             color: selectedCategory == category
-                                ? Colors.white
-                                : Colors.black87,
+                                ? current.accent
+                                : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                          child: Text(
+                            category,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: selectedCategory == category
+                                  ? Colors.white
+                                  : Colors.black87,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  )
-                  .toList(),
-            ),
-
-            SizedBox(height: 24.h),
-
-            // 제목 입력
-            Text(
-              '제목',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+                    )
+                    .toList(),
               ),
-            ),
-            SizedBox(height: 12.h),
-            TextField(
-              controller: _titleController,
-              decoration: InputDecoration(
-                hintText: '제목을 입력하세요',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
+
+              SizedBox(height: 24.h),
+
+              // 제목 입력
+              Text(
+                '제목',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                  borderSide: BorderSide(color: current.accent, width: 2),
-                ),
-                contentPadding: EdgeInsets.all(16.w),
               ),
-            ),
-
-            SizedBox(height: 24.h),
-
-            // 내용 입력
-            Text(
-              '문의 내용',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            SizedBox(height: 12.h),
-            TextField(
-              controller: _contentController,
-              maxLines: 10,
-              decoration: InputDecoration(
-                hintText: '문의하실 내용을 자세히 입력해주세요',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                  borderSide: BorderSide(color: current.accent, width: 2),
-                ),
-                contentPadding: EdgeInsets.all(16.w),
-              ),
-            ),
-
-            SizedBox(height: 32.h),
-
-            // 제출 버튼
-            SizedBox(
-              width: double.infinity,
-              height: 50.h,
-              child: ElevatedButton(
-                onPressed: isSubmitting ? null : _submitInquiry,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: current.accent,
-                  shape: RoundedRectangleBorder(
+              SizedBox(height: 12.h),
+              TextField(
+                controller: _titleController,
+                decoration: InputDecoration(
+                  hintText: '제목을 입력하세요',
+                  border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(color: current.accent, width: 2),
+                  ),
+                  contentPadding: EdgeInsets.all(16.w),
                 ),
-                child: isSubmitting
-                    ? SizedBox(
-                        width: 20.w,
-                        height: 20.h,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        '문의하기',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
               ),
-            ),
 
-            SizedBox(height: 20.h),
-          ],
+              SizedBox(height: 24.h),
+
+              // 내용 입력
+              Text(
+                '문의 내용',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              TextField(
+                controller: _contentController,
+                maxLines: 10,
+                decoration: InputDecoration(
+                  hintText: '문의하실 내용을 자세히 입력해주세요',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(color: current.accent, width: 2),
+                  ),
+                  contentPadding: EdgeInsets.all(16.w),
+                ),
+              ),
+
+              SizedBox(height: 32.h),
+
+              // 제출 버튼
+              SizedBox(
+                width: double.infinity,
+                height: 50.h,
+                child: ElevatedButton(
+                  onPressed: isSubmitting ? null : _submitInquiry,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: current.accent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  child: isSubmitting
+                      ? SizedBox(
+                          width: 20.w,
+                          height: 20.h,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          '문의하기',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+
+              SizedBox(height: 20.h),
+            ],
+          ),
         ),
       ),
     );

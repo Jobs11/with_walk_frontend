@@ -8,6 +8,7 @@ import 'package:with_walk/functions/widegt_fn.dart';
 import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 import 'package:with_walk/views/dialogs/profile_change.dart';
+import 'package:with_walk/views/widgets/smart_profile_image.dart';
 
 class MembershipUpdateScreen extends StatefulWidget {
   final ThemeColors current;
@@ -35,7 +36,7 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
   @override
   void initState() {
     super.initState();
-    paint = m.mProfileImage!;
+    paint = m.mProfileImage ?? 'assets/images/icons/user.png';
     nameController.text = m.mName;
     nicknameController.text = m.mNickname;
     emailController.text = m.mEmail.split('@')[0];
@@ -50,7 +51,7 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
           '${emailController.text.trim()}@${lastemailController.text.trim()}',
       mId: m.mId,
       mPassword: passwordController.text.trim(),
-      mProfileImage: m.mProfileImage,
+      mProfileImage: paint,
     );
 
     try {
@@ -122,11 +123,11 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
                         });
                       }
                     },
-                    child: Image.asset(
-                      paint ?? 'assets/images/icons/user.png',
-                      fit: BoxFit.cover,
+                    child: SmartProfileImage(
+                      imageUrl: paint ?? 'assets/images/icons/user.png',
                       width: 120.w,
                       height: 120.h,
+                      fit: BoxFit.cover,
                     ),
                   ),
                   inputList("비밀번호", passwordController),
@@ -148,7 +149,7 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
                           nameController.text.isNotEmpty &&
                           nicknameController.text.isNotEmpty &&
                           emailController.text.isNotEmpty &&
-                          selectedValue != null) {
+                          lastemailController.text.isNotEmpty) {
                         if (passwordController.text ==
                             conpasswordController.text) {
                           _update();

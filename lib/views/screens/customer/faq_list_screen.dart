@@ -56,104 +56,109 @@ class _FaqListScreenState extends State<FaqListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'FAQ',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            'FAQ',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-      ),
-      body: Column(
-        children: [
-          // 카테고리 탭
-          Container(
-            color: Colors.white,
-            padding: EdgeInsets.symmetric(vertical: 12.h),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Row(
-                children: categories
-                    .map(
-                      (category) => Padding(
-                        padding: EdgeInsets.only(right: 12.w),
-                        child: GestureDetector(
-                          onTap: () => _selectCategory(category),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 8.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: selectedCategory == category
-                                  ? current.accent
-                                  : Colors.grey[200],
-                              borderRadius: BorderRadius.circular(20.r),
-                            ),
-                            child: Text(
-                              category,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
+        body: Column(
+          children: [
+            // 카테고리 탭
+            Container(
+              color: Colors.white,
+              padding: EdgeInsets.symmetric(vertical: 12.h),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Row(
+                  children: categories
+                      .map(
+                        (category) => Padding(
+                          padding: EdgeInsets.only(right: 12.w),
+                          child: GestureDetector(
+                            onTap: () => _selectCategory(category),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
+                                vertical: 8.h,
+                              ),
+                              decoration: BoxDecoration(
                                 color: selectedCategory == category
-                                    ? Colors.white
-                                    : Colors.black87,
+                                    ? current.accent
+                                    : Colors.grey[200],
+                                borderRadius: BorderRadius.circular(20.r),
+                              ),
+                              child: Text(
+                                category,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: selectedCategory == category
+                                      ? Colors.white
+                                      : Colors.black87,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    )
-                    .toList(),
+                      )
+                      .toList(),
+                ),
               ),
             ),
-          ),
 
-          // FAQ 리스트
-          Expanded(
-            child: isLoading
-                ? Center(child: CircularProgressIndicator())
-                : faqList.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.help_outline,
-                          size: 64.sp,
-                          color: Colors.grey,
-                        ),
-                        SizedBox(height: 16.h),
-                        Text(
-                          'FAQ가 없습니다',
-                          style: TextStyle(fontSize: 16.sp, color: Colors.grey),
-                        ),
-                      ],
+            // FAQ 리스트
+            Expanded(
+              child: isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : faqList.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.help_outline,
+                            size: 64.sp,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'FAQ가 없습니다',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: EdgeInsets.all(16.w),
+                      itemCount: faqList.length,
+                      separatorBuilder: (context, index) =>
+                          SizedBox(height: 12.h),
+                      itemBuilder: (context, index) {
+                        final faq = faqList[index];
+                        return _buildFaqCard(faq);
+                      },
                     ),
-                  )
-                : ListView.separated(
-                    padding: EdgeInsets.all(16.w),
-                    itemCount: faqList.length,
-                    separatorBuilder: (context, index) =>
-                        SizedBox(height: 12.h),
-                    itemBuilder: (context, index) {
-                      final faq = faqList[index];
-                      return _buildFaqCard(faq);
-                    },
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -9,6 +9,7 @@ import 'package:with_walk/functions/state_fn.dart';
 import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/widgets/follower_dialog.dart';
 import 'package:with_walk/views/widgets/following_dialog.dart';
+import 'package:with_walk/views/widgets/smart_profile_image.dart';
 
 class UserProfileBottomSheet extends StatefulWidget {
   final String userId;
@@ -198,8 +199,9 @@ class _UserProfileBottomSheetState extends State<UserProfileBottomSheet> {
                       border: Border.all(color: current.accent, width: 3),
                     ),
                     child: ClipOval(
-                      child: Image.asset(
-                        widget.userImage ?? 'assets/images/icons/user.png',
+                      child: SmartProfileImage(
+                        imageUrl:
+                            widget.userImage ?? 'assets/images/icons/user.png',
                         width: 100.w,
                         height: 100.h,
                         fit: BoxFit.cover,

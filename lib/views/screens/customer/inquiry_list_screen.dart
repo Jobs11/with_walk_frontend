@@ -49,52 +49,58 @@ class _InquiryListScreenState extends State<InquiryListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          '내 문의 내역',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            '내 문의 내역',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : inquiryList.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.message_outlined,
+                      size: 64.sp,
+                      color: Colors.grey,
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      '문의 내역이 없습니다',
+                      style: TextStyle(fontSize: 16.sp, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: _loadInquiries,
+                child: ListView.separated(
+                  padding: EdgeInsets.all(16.w),
+                  itemCount: inquiryList.length,
+                  separatorBuilder: (context, index) => SizedBox(height: 12.h),
+                  itemBuilder: (context, index) {
+                    final inquiry = inquiryList[index];
+                    return _buildInquiryCard(inquiry);
+                  },
+                ),
+              ),
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : inquiryList.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.message_outlined, size: 64.sp, color: Colors.grey),
-                  SizedBox(height: 16.h),
-                  Text(
-                    '문의 내역이 없습니다',
-                    style: TextStyle(fontSize: 16.sp, color: Colors.grey),
-                  ),
-                ],
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _loadInquiries,
-              child: ListView.separated(
-                padding: EdgeInsets.all(16.w),
-                itemCount: inquiryList.length,
-                separatorBuilder: (context, index) => SizedBox(height: 12.h),
-                itemBuilder: (context, index) {
-                  final inquiry = inquiryList[index];
-                  return _buildInquiryCard(inquiry);
-                },
-              ),
-            ),
     );
   }
 

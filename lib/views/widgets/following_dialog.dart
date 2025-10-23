@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/api/model/member.dart';
 import 'package:with_walk/api/service/friend_service.dart';
 import 'package:with_walk/api/service/member_service.dart';
+import 'package:with_walk/views/widgets/smart_profile_image.dart';
 import 'package:with_walk/views/widgets/user_profile_bottom_sheet.dart';
 
 void showFollowingDialog(BuildContext context, String userId) {
@@ -138,9 +140,11 @@ class _FollowingDialogState extends State<FollowingDialog> {
                       itemBuilder: (context, index) {
                         final user = following[index];
                         return ListTile(
-                          leading: Image.asset(
-                            user.mProfileImage ??
-                                'assets/images/icons/user.png',
+                          leading: SmartProfileAvatar(
+                            imageUrl:
+                                user.mProfileImage ??
+                                'assets/images/foots/cat.png',
+                            radius: 25.r,
                           ),
                           title: Text(user.mNickname),
                           trailing: const Icon(

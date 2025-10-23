@@ -145,7 +145,10 @@ class CloudinaryUploadService {
 
       request.fields['upload_preset'] = uploadPreset;
       request.fields['folder'] = 'with_walk/profiles';
-      request.fields['public_id'] = userId;
+
+      // ✅ 타임스탬프 포함 (매번 새 파일 생성)
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      request.fields['public_id'] = '${userId}_$timestamp';
 
       final response = await request.send();
       final responseData = await response.stream.bytesToString();

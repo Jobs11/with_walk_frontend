@@ -94,218 +94,220 @@ class _InquiryDetailScreenState extends State<InquiryDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return SafeArea(
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          '문의 상세',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
           ),
-        ),
-        actions: [
-          if (inquiry?.status == '답변대기')
-            IconButton(
-              icon: Icon(Icons.delete, color: Colors.red),
-              onPressed: _deleteInquiry,
+          title: Text(
+            '문의 상세',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
             ),
-        ],
-      ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : inquiry == null
-          ? Center(
-              child: Text(
-                '문의를 불러올 수 없습니다',
-                style: TextStyle(fontSize: 16.sp, color: Colors.grey),
+          ),
+          actions: [
+            if (inquiry?.status == '답변대기')
+              IconButton(
+                icon: Icon(Icons.delete, color: Colors.red),
+                onPressed: _deleteInquiry,
               ),
-            )
-          : SingleChildScrollView(
-              padding: EdgeInsets.all(20.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 상태 및 카테고리
-                  Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10.w,
-                          vertical: 6.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: inquiry!.status == '답변완료'
-                              ? current.accent.withValues(alpha: 0.1)
-                              : Colors.orange.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6.r),
-                        ),
-                        child: Text(
-                          inquiry!.status,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: inquiry!.status == '답변완료'
-                                ? current.accent
-                                : Colors.orange,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10.w,
-                          vertical: 6.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(6.r),
-                        ),
-                        child: Text(
-                          inquiry!.category,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 16.h),
-
-                  // 제목
-                  Text(
-                    inquiry!.title,
-                    style: TextStyle(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      height: 1.4,
-                    ),
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  // 날짜
-                  Row(
-                    children: [
-                      Icon(Icons.schedule, size: 16.sp, color: Colors.grey),
-                      SizedBox(width: 4.w),
-                      Text(
-                        DateFormat(
-                          'yyyy.MM.dd HH:mm',
-                        ).format(DateTime.parse(inquiry!.createdAt!)),
-                        style: TextStyle(fontSize: 13.sp, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 20.h),
-
-                  Divider(thickness: 1),
-
-                  SizedBox(height: 20.h),
-
-                  // 문의 내용
-                  Container(
-                    padding: EdgeInsets.all(16.w),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Text(
-                      inquiry!.content,
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        color: Colors.black87,
-                        height: 1.8,
-                      ),
-                    ),
-                  ),
-
-                  // 답변이 있는 경우
-                  if (inquiry!.replyContent != null) ...[
-                    SizedBox(height: 24.h),
-
+          ],
+        ),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : inquiry == null
+            ? Center(
+                child: Text(
+                  '문의를 불러올 수 없습니다',
+                  style: TextStyle(fontSize: 16.sp, color: Colors.grey),
+                ),
+              )
+            : SingleChildScrollView(
+                padding: EdgeInsets.all(20.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 상태 및 카테고리
                     Row(
                       children: [
-                        Icon(
-                          Icons.admin_panel_settings,
-                          color: current.accent,
-                          size: 20.sp,
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 6.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: inquiry!.status == '답변완료'
+                                ? current.accent.withValues(alpha: 0.1)
+                                : Colors.orange.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                          child: Text(
+                            inquiry!.status,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: inquiry!.status == '답변완료'
+                                  ? current.accent
+                                  : Colors.orange,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                         SizedBox(width: 8.w),
-                        Text(
-                          '관리자 답변',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                            color: current.accent,
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 6.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                          child: Text(
+                            inquiry!.category,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
                     ),
 
+                    SizedBox(height: 16.h),
+
+                    // 제목
+                    Text(
+                      inquiry!.title,
+                      style: TextStyle(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                        height: 1.4,
+                      ),
+                    ),
+
                     SizedBox(height: 12.h),
 
+                    // 날짜
+                    Row(
+                      children: [
+                        Icon(Icons.schedule, size: 16.sp, color: Colors.grey),
+                        SizedBox(width: 4.w),
+                        Text(
+                          DateFormat(
+                            'yyyy.MM.dd HH:mm',
+                          ).format(DateTime.parse(inquiry!.createdAt!)),
+                          style: TextStyle(fontSize: 13.sp, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 20.h),
+
+                    Divider(thickness: 1),
+
+                    SizedBox(height: 20.h),
+
+                    // 문의 내용
                     Container(
                       padding: EdgeInsets.all(16.w),
                       decoration: BoxDecoration(
-                        color: current.accent.withValues(alpha: 0.05),
+                        color: Colors.grey[50],
                         borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                          color: current.accent.withValues(alpha: 0.2),
+                      ),
+                      child: Text(
+                        inquiry!.content,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          color: Colors.black87,
+                          height: 1.8,
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+
+                    // 답변이 있는 경우
+                    if (inquiry!.replyContent != null) ...[
+                      SizedBox(height: 24.h),
+
+                      Row(
                         children: [
-                          Text(
-                            inquiry!.replyContent!,
-                            style: TextStyle(
-                              fontSize: 15.sp,
-                              color: Colors.black87,
-                              height: 1.8,
-                            ),
+                          Icon(
+                            Icons.admin_panel_settings,
+                            color: current.accent,
+                            size: 20.sp,
                           ),
-                          SizedBox(height: 12.h),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.schedule,
-                                size: 14.sp,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                DateFormat(
-                                  'yyyy.MM.dd HH:mm',
-                                ).format(DateTime.parse(inquiry!.replyDate!)),
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
+                          SizedBox(width: 8.w),
+                          Text(
+                            '관리자 답변',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.bold,
+                              color: current.accent,
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
 
-                  SizedBox(height: 40.h),
-                ],
+                      SizedBox(height: 12.h),
+
+                      Container(
+                        padding: EdgeInsets.all(16.w),
+                        decoration: BoxDecoration(
+                          color: current.accent.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(
+                            color: current.accent.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              inquiry!.replyContent!,
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                color: Colors.black87,
+                                height: 1.8,
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.schedule,
+                                  size: 14.sp,
+                                  color: Colors.grey,
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  DateFormat(
+                                    'yyyy.MM.dd HH:mm',
+                                  ).format(DateTime.parse(inquiry!.replyDate!)),
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    SizedBox(height: 40.h),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 }

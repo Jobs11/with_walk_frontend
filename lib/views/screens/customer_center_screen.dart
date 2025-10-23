@@ -97,326 +97,335 @@ class _CustomerCenterScreenState extends State<CustomerCenterScreen> {
   Widget build(BuildContext context) {
     final isAdmin = CurrentUser.instance.member?.mRole == 'ADMIN';
 
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
-          children: [
-            Icon(Icons.headset_mic, color: current.accent, size: 24.sp),
-            SizedBox(width: 8.w),
-            Text(
-              '고객센터',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        // 관리자 버튼 추가
-        actions: [
-          if (isAdmin)
-            IconButton(
-              icon: Icon(Icons.admin_panel_settings, color: current.accent),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AdminInquiryListScreen(),
-                  ),
-                );
-              },
-            ),
-        ],
-      ),
-
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // 검색창
-            Container(
-              color: Colors.white,
-              padding: EdgeInsets.all(16.w),
-              child: TextField(
-                controller: _searchController,
-                onSubmitted: _searchFaqs,
-                decoration: InputDecoration(
-                  hintText: '검색어를 입력해주세요',
-                  hintStyle: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 14.sp,
-                  ),
-                  prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(Icons.clear, color: Colors.grey[400]),
-                          onPressed: () {
-                            _searchController.clear();
-                            _loadFaqs();
-                          },
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+    return SafeArea(
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.headset_mic, color: current.accent, size: 24.sp),
+              SizedBox(width: 8.w),
+              Text(
+                '고객센터',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
+            ],
+          ),
+          // 관리자 버튼 추가
+          actions: [
+            if (isAdmin)
+              IconButton(
+                icon: Icon(Icons.admin_panel_settings, color: current.accent),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AdminInquiryListScreen(),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
 
-            // 탭 메뉴
-            Container(
-              color: Colors.white,
-              padding: EdgeInsets.symmetric(vertical: 8.h),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 8.w),
-                child: Row(
-                  children: categories
-                      .map(
-                        (category) => Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w),
-                          child: GestureDetector(
-                            onTap: () => _selectCategory(category),
-                            child: _buildTab(
-                              category,
-                              selectedCategory == category,
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              // 검색창
+              Container(
+                color: Colors.white,
+                padding: EdgeInsets.all(16.w),
+                child: TextField(
+                  controller: _searchController,
+                  onSubmitted: _searchFaqs,
+                  decoration: InputDecoration(
+                    hintText: '검색어를 입력해주세요',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[400],
+                      fontSize: 14.sp,
+                    ),
+                    prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(Icons.clear, color: Colors.grey[400]),
+                            onPressed: () {
+                              _searchController.clear();
+                              _loadFaqs();
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                  ),
+                ),
+              ),
+
+              // 탭 메뉴
+              Container(
+                color: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 8.h),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 8.w),
+                  child: Row(
+                    children: categories
+                        .map(
+                          (category) => Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8.w),
+                            child: GestureDetector(
+                              onTap: () => _selectCategory(category),
+                              child: _buildTab(
+                                category,
+                                selectedCategory == category,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 12.h),
+
+              // 빠른 메뉴
+              Container(
+                color: Colors.white,
+                padding: EdgeInsets.all(20.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '빠른 메뉴',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => NoticeListScreen(),
+                              ),
+                            );
+                          },
+                          child: _buildQuickMenu(
+                            Icons.notifications_outlined,
+                            '공지사항',
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FaqListScreen(),
+                              ),
+                            );
+                          },
+                          child: _buildQuickMenu(Icons.help_outline, 'FAQ'),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => InquiryCreateScreen(),
+                              ),
+                            );
+                          },
+                          child: _buildQuickMenu(Icons.mail_outline, '문의하기'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 12.h),
+
+              // 자주 묻는 질문
+              Container(
+                color: Colors.white,
+                padding: EdgeInsets.all(20.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '자주 묻는 질문',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FaqListScreen(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            '전체보기',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: current.accent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16.h),
+
+                    // FAQ 로딩 또는 리스트
+                    if (isLoading)
+                      Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.h),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (faqList.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.h),
+                          child: Text(
+                            '검색 결과가 없습니다',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.grey,
                             ),
                           ),
                         ),
                       )
-                      .toList(),
+                    else
+                      Column(
+                        children: faqList
+                            .take(3)
+                            .map(
+                              (faq) => Column(
+                                children: [
+                                  _buildFaqItem(faq),
+                                  if (faqList.indexOf(faq) < 2)
+                                    Divider(height: 24.h),
+                                ],
+                              ),
+                            )
+                            .toList(),
+                      ),
+                  ],
                 ),
               ),
-            ),
 
-            SizedBox(height: 12.h),
+              SizedBox(height: 12.h),
 
-            // 빠른 메뉴
-            Container(
-              color: Colors.white,
-              padding: EdgeInsets.all(20.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '빠른 메뉴',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => NoticeListScreen(),
-                            ),
-                          );
-                        },
-                        child: _buildQuickMenu(
-                          Icons.notifications_outlined,
-                          '공지사항',
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => FaqListScreen(),
-                            ),
-                          );
-                        },
-                        child: _buildQuickMenu(Icons.help_outline, 'FAQ'),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => InquiryCreateScreen(),
-                            ),
-                          );
-                        },
-                        child: _buildQuickMenu(Icons.mail_outline, '문의하기'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 12.h),
-
-            // 자주 묻는 질문
-            Container(
-              color: Colors.white,
-              padding: EdgeInsets.all(20.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '자주 묻는 질문',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => FaqListScreen(),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          '전체보기',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: current.accent,
+              // 내 문의 내역 버튼
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50.h,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => InquiryListScreen(
+                            userId: CurrentUser.instance.member!.mId,
                           ),
                         ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: current.accent),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 16.h),
-
-                  // FAQ 로딩 또는 리스트
-                  if (isLoading)
-                    Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(20.h),
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  else if (faqList.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(20.h),
-                        child: Text(
-                          '검색 결과가 없습니다',
-                          style: TextStyle(fontSize: 14.sp, color: Colors.grey),
-                        ),
-                      ),
-                    )
-                  else
-                    Column(
-                      children: faqList
-                          .take(3)
-                          .map(
-                            (faq) => Column(
-                              children: [
-                                _buildFaqItem(faq),
-                                if (faqList.indexOf(faq) < 2)
-                                  Divider(height: 24.h),
-                              ],
-                            ),
-                          )
-                          .toList(),
                     ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 12.h),
-
-            // 내 문의 내역 버튼
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50.h,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => InquiryListScreen(
-                          userId: CurrentUser.instance.member!.mId,
-                        ),
-                      ),
-                    );
-                  },
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: current.accent),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                  ),
-                  icon: Icon(Icons.message, color: current.accent, size: 20.sp),
-                  label: Text(
-                    '내 문의 내역',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
+                    icon: Icon(
+                      Icons.message,
                       color: current.accent,
+                      size: 20.sp,
                     ),
-                  ),
-                ),
-              ),
-            ),
-
-            SizedBox(height: 12.h),
-
-            // 1:1 문의 작성 버튼
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50.h,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => InquiryCreateScreen(),
+                    label: Text(
+                      '내 문의 내역',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: current.accent,
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: current.accent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                  ),
-                  child: Text(
-                    '1:1 문의하기',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
                     ),
                   ),
                 ),
               ),
-            ),
 
-            SizedBox(height: 20.h),
-          ],
+              SizedBox(height: 12.h),
+
+              // 1:1 문의 작성 버튼
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50.h,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => InquiryCreateScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: current.accent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                    ),
+                    child: Text(
+                      '1:1 문의하기',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 20.h),
+            ],
+          ),
         ),
       ),
     );

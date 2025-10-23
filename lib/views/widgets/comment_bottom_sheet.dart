@@ -8,6 +8,7 @@ import 'package:with_walk/api/service/post_comment_service.dart';
 import 'package:with_walk/api/service/post_comment_like_service.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/theme/colors.dart';
+import 'package:with_walk/views/widgets/smart_profile_image.dart';
 import 'package:with_walk/views/widgets/user_profile_bottom_sheet.dart';
 
 class CommentBottomSheet extends StatefulWidget {
@@ -436,11 +437,13 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                         // 프로필 이미지
                         GestureDetector(
                           onTap: () => _showUserProfile(context, comment),
-                          child: Image.asset(
-                            comment.authorImage ??
+                          child: SmartProfileImage(
+                            imageUrl:
+                                comment.authorImage ??
                                 'assets/images/icons/user.png',
                             width: 40.w,
                             height: 40.h,
+                            fit: BoxFit.cover,
                           ),
                         ),
                         SizedBox(width: 12.w),
@@ -532,11 +535,13 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Image.asset(
-                                            widget.authorImage,
+                                          SmartProfileImage(
+                                            imageUrl: widget.authorImage,
                                             width: 14.w,
                                             height: 14.h,
+                                            fit: BoxFit.cover,
                                           ),
+
                                           SizedBox(width: 3.w),
                                           Icon(
                                             Icons.favorite,

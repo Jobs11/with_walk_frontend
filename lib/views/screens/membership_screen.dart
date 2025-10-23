@@ -8,7 +8,6 @@ import 'package:with_walk/functions/widegt_fn.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/dialogs/profile_change.dart';
-import 'package:with_walk/views/screens/login_screen.dart';
 
 class MembershipScreen extends StatefulWidget {
   final ThemeColors current;
@@ -29,7 +28,6 @@ class _MembershipScreenState extends State<MembershipScreen> {
 
   String? selectedValue;
   bool showDropdown = false; // 드롭다운 표시 여부
-  String? paint;
   bool isoverlap = false;
   Member? member;
   Member? memberNickname;
@@ -50,7 +48,6 @@ class _MembershipScreenState extends State<MembershipScreen> {
       mNickname: nicknameController.text.trim(),
       mEmail:
           '${emailController.text.trim()}@${lastemailController.text.trim()}',
-      mProfileImage: paint,
     );
 
     try {
@@ -64,12 +61,6 @@ class _MembershipScreenState extends State<MembershipScreen> {
         backgroundColor: const Color(0xAA000000), // 반투명 검정
         textColor: Colors.white,
         fontSize: 16.0.sp,
-      );
-
-      // 성공 시에만 페이지 이동
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => LoginScreen()),
       );
     } catch (e) {
       if (!mounted) return;
@@ -152,26 +143,6 @@ class _MembershipScreenState extends State<MembershipScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  GestureDetector(
-                    onTap: () async {
-                      final profileimage = await profileChange(
-                        context,
-                        title: '회원가입',
-                      );
-
-                      if (profileimage != null) {
-                        setState(() {
-                          paint = profileimage;
-                        });
-                      }
-                    },
-                    child: Image.asset(
-                      paint ?? 'assets/images/icons/user.png',
-                      fit: BoxFit.cover,
-                      width: 120.w,
-                      height: 120.h,
-                    ),
-                  ),
                   inputList("아이디", idController, (v) {}),
                   inputList("비밀번호", passwordController, (v) {}),
                   inputList("비밀번호 확인", conpasswordController, (v) {}),
@@ -209,10 +180,15 @@ class _MembershipScreenState extends State<MembershipScreen> {
                             nameController.text.isNotEmpty &&
                             nicknameController.text.isNotEmpty &&
                             emailController.text.isNotEmpty &&
-                            selectedValue != null) {
+                            lastemailController.text.isNotEmpty) {
                           if (passwordController.text ==
                               conpasswordController.text) {
                             _register();
+                            profileChange(
+                              context,
+                              title: '회원가입',
+                              userId: idController.text.trim(), // ✅ 입력한 ID 전달
+                            );
                           } else {
                             Fluttertoast.showToast(
                               msg: "비밀번호가 서로 다릅니다.",

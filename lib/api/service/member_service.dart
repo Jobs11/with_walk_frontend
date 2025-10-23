@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:with_walk/api/model/member_nickname.dart';
+import 'package:with_walk/api/model/member_profile.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/api/model/member.dart';
 
@@ -118,7 +119,7 @@ class Memberservice {
     }
   }
 
-  static Future<void> updateProfile(Member member) async {
+  static Future<void> updateProfile(MemberProfile member) async {
     final url = Uri.parse("${Baseurl.b}$menual/$modifyProfile");
     final res = await http
         .post(
