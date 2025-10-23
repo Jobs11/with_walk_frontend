@@ -94,8 +94,7 @@ class _MembershipUpdateScreenState extends State<MembershipUpdateScreen> {
           child: WithWalkAppbar(
             titlename: "프로필 수정",
             isBack: true,
-            isColored: widget.current.app,
-            fontColor: widget.current.fontThird,
+            current: widget.current,
           ),
         ),
         body: Stack(

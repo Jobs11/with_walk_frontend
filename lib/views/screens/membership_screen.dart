@@ -137,8 +137,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
           child: WithWalkAppbar(
             titlename: "회원가입",
             isBack: true,
-            isColored: widget.current.app,
-            fontColor: widget.current.fontThird,
+            current: widget.current,
           ),
         ),
         body: Stack(

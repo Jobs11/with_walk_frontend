@@ -99,6 +99,7 @@ class _PostCardState extends State<PostCard> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => CommentBottomSheet(
+        authorImage: widget.post.authorImage ?? 'assets/images/icons/user.png',
         pNum: widget.post.pNum!,
         onCommentChanged: () {
           widget.onCommentChanged?.call();
@@ -518,7 +519,13 @@ class _PostCardState extends State<PostCard> {
                 onTap: widget.onLike,
                 child: Row(
                   children: [
-                    Icon(Icons.favorite, size: 20.sp, color: current.accent),
+                    Icon(
+                      widget.post.isLikedByUser
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      size: 20.sp,
+                      color: current.accent,
+                    ),
                     SizedBox(width: 4.w),
                     Text(
                       '${widget.post.pLikes}',
@@ -680,7 +687,7 @@ class _PostCardState extends State<PostCard> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Image.asset(
-                                          comment.authorImage ??
+                                          widget.post.authorImage ??
                                               'assets/images/icons/user.png',
                                           width: 12.w,
                                           height: 12.h,

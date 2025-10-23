@@ -35,3 +35,5 @@ flutter:
     - assets/images/bgs/
     - assets/images/apis/
     - assets/images/foots/
+    - assets/data/
+

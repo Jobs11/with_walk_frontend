@@ -11,22 +11,63 @@ class PostService {
   static const String like = "like";
   static const String update = "update";
   static const String delete = "delete";
+  static const String popular = "popular";
 
   // 피드 목록 조회
-  static Future<List<Post>> getPostFeeds() async {
+  static Future<List<Post>> getPostFeeds({
+    required String userId,
+    String style = 'all', // 기본값: 전체 피드
+  }) async {
     List<Post> postInstances = [];
-    final url = Uri.parse('${Baseurl.b}$manual/$feeds');
 
-    final response = await http.get(url).timeout(const Duration(seconds: 10));
+    // ✅ 쿼리 파라미터 추가
+    final url = Uri.parse(
+      '${Baseurl.b}$manual/$feeds',
+    ).replace(queryParameters: {'user_id': userId, 'style': style});
 
-    if (response.statusCode == 200) {
-      final List<dynamic> posts = jsonDecode(utf8.decode(response.bodyBytes));
-      for (var post in posts) {
-        postInstances.add(Post.fromJson(post));
+    try {
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> posts = jsonDecode(utf8.decode(response.bodyBytes));
+        for (var post in posts) {
+          postInstances.add(Post.fromJson(post));
+        }
+        return postInstances;
+      } else {
+        throw Exception('피드를 불러올 수 없습니다: ${response.statusCode}');
       }
-      return postInstances;
+    } catch (e) {
+      throw Exception('피드를 불러오는 중 오류 발생: $e');
     }
-    throw Exception('피드를 불러올 수 없습니다: ${response.statusCode}');
+  }
+
+  // 인기 피드 목록 조회
+  static Future<List<Post>> getPopularPostFeeds({
+    required String userId,
+  }) async {
+    List<Post> postInstances = [];
+
+    // ✅ 쿼리 파라미터 추가
+    final url = Uri.parse(
+      '${Baseurl.b}$manual/$popular',
+    ).replace(queryParameters: {'user_id': userId});
+
+    try {
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> posts = jsonDecode(utf8.decode(response.bodyBytes));
+        for (var post in posts) {
+          postInstances.add(Post.fromJson(post));
+        }
+        return postInstances;
+      } else {
+        throw Exception('피드를 불러올 수 없습니다: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('피드를 불러오는 중 오류 발생: $e');
+    }
   }
 
   // 게시글 작성

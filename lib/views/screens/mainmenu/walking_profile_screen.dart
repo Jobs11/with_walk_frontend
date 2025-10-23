@@ -92,8 +92,7 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
         child: WithWalkAppbar(
           titlename: "발자국 주인공",
           isBack: false,
-          isColored: current.app,
-          fontColor: current.fontThird,
+          current: current,
         ),
       ),
       body: Stack(

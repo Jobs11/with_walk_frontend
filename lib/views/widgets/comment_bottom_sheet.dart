@@ -11,11 +11,13 @@ import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/widgets/user_profile_bottom_sheet.dart';
 
 class CommentBottomSheet extends StatefulWidget {
+  final String authorImage;
   final int pNum;
   final VoidCallback onCommentChanged;
 
   const CommentBottomSheet({
     super.key,
+    required this.authorImage,
     required this.pNum,
     required this.onCommentChanged,
   });
@@ -531,8 +533,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Image.asset(
-                                            comment.authorImage ??
-                                                'assets/images/icons/user.png',
+                                            widget.authorImage,
                                             width: 14.w,
                                             height: 14.h,
                                           ),

@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:with_walk/api/model/inquiry.dart';
 import 'package:with_walk/api/service/customer_service.dart';
 import 'package:with_walk/theme/colors.dart';
-import 'package:with_walk/views/screens/customer/admin_inquiry_detail_screen.dart';
+import 'package:with_walk/views/screens/admin/admin_inquiry_detail_screen.dart';
 
 class AdminInquiryListScreen extends StatefulWidget {
   const AdminInquiryListScreen({super.key});

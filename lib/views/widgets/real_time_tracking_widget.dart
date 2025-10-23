@@ -552,8 +552,7 @@ class _RealTimeTrackingWidgetState extends State<RealTimeTrackingWidget> {
         child: WithWalkAppbar(
           titlename: "실시간 추적",
           isBack: true,
-          isColored: current.app,
-          fontColor: current.fontThird,
+          current: current,
         ),
       ),
       body: Stack(

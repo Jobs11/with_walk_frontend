@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/bars/with_walk_navigationbar.dart';
-import 'package:with_walk/views/screens/walking_distance_screen.dart';
-import 'package:with_walk/views/screens/walking_profile_screen.dart';
-import 'package:with_walk/views/screens/walking_storage_screen.dart';
-import 'package:with_walk/views/screens/walking_talk_screen.dart';
+import 'package:with_walk/views/screens/mainmenu/walking_distance_screen.dart';
+import 'package:with_walk/views/screens/mainmenu/walking_event_screen.dart';
+import 'package:with_walk/views/screens/mainmenu/walking_profile_screen.dart';
+import 'package:with_walk/views/screens/mainmenu/walking_storage_screen.dart';
+import 'package:with_walk/views/screens/mainmenu/walking_talk_screen.dart';
 
 class MainhomeScreen extends StatefulWidget {
   const MainhomeScreen({super.key});
@@ -21,6 +22,7 @@ class _MainhomeScreenState extends State<MainhomeScreen> {
     WalkingDistanceScreen(),
     WalkingStorageScreen(),
     WalkingTalkScreen(),
+    WalkingEventScreen(),
     WalkingProfileScreen(),
   ];
 

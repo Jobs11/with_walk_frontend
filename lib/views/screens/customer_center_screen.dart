@@ -4,7 +4,7 @@ import 'package:with_walk/api/model/faq.dart';
 import 'package:with_walk/api/service/customer_service.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/theme/colors.dart';
-import 'package:with_walk/views/screens/customer/admin_inquiry_list_screen.dart';
+import 'package:with_walk/views/screens/admin/admin_inquiry_list_screen.dart';
 import 'package:with_walk/views/screens/customer/faq_list_screen.dart';
 import 'package:with_walk/views/screens/customer/feq_detail_screen.dart';
 import 'package:with_walk/views/screens/customer/inquiry_create_screen.dart';
@@ -98,6 +98,7 @@ class _CustomerCenterScreenState extends State<CustomerCenterScreen> {
     final isAdmin = CurrentUser.instance.member?.mRole == 'ADMIN';
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: Colors.white,

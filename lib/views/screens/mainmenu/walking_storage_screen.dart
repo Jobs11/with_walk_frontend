@@ -205,8 +205,7 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
         child: WithWalkAppbar(
           titlename: "남긴 발자국",
           isBack: false,
-          isColored: current.app,
-          fontColor: current.fontThird,
+          current: current,
         ),
       ),
       body: Stack(

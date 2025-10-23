@@ -317,8 +317,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
           child: WithWalkAppbar(
             titlename: "발걸음",
             isBack: false,
-            isColored: current.app,
-            fontColor: current.fontThird,
+            current: current,
           ),
         ),
         body: Stack(
