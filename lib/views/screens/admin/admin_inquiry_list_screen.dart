@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:with_walk/api/model/inquiry.dart';
 import 'package:with_walk/api/service/customer_service.dart';
-import 'package:with_walk/theme/colors.dart';
+import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/views/screens/admin/admin_inquiry_detail_screen.dart';
 
 class AdminInquiryListScreen extends StatefulWidget {
@@ -14,7 +14,7 @@ class AdminInquiryListScreen extends StatefulWidget {
 }
 
 class _AdminInquiryListScreenState extends State<AdminInquiryListScreen> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
   List<Inquiry> allInquiries = [];
   List<Inquiry> pendingInquiries = [];
   List<Inquiry> answeredInquiries = [];
@@ -24,7 +24,7 @@ class _AdminInquiryListScreenState extends State<AdminInquiryListScreen> {
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
+
     _loadAllInquiries();
   }
 

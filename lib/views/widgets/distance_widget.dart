@@ -11,7 +11,6 @@ import 'package:with_walk/api/service/naver_local_service.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/functions/widegt_fn.dart';
 
-import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 
 class DistanceWidget extends StatefulWidget {
@@ -30,7 +29,7 @@ class DistanceWidget extends StatefulWidget {
 }
 
 class _DistanceWidgetState extends State<DistanceWidget> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
   final startController = TextEditingController();
   final arriveController = TextEditingController();
 
@@ -61,7 +60,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
+
     _mapReady = Completer<NaverMapController>(); // ✅ 여기서 생성
   }
 

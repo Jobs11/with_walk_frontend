@@ -7,7 +7,6 @@ import 'package:with_walk/api/service/challenge_service.dart';
 import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/api/service/street_service.dart';
 import 'package:with_walk/functions/data.dart';
-import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 import 'package:with_walk/views/screens/admin/create_challenge_screen.dart';
 import 'package:with_walk/views/screens/admin/edit_challenge_screen.dart';
@@ -22,7 +21,7 @@ class WalkingEventScreen extends StatefulWidget {
 
 class _WalkingEventScreenState extends State<WalkingEventScreen>
     with SingleTickerProviderStateMixin {
-  late ThemeColors current;
+  final current = ThemeManager().current;
   late TabController _tabController;
 
   late Future<List<Challenge>> _activeChallengesFuture;
@@ -33,7 +32,7 @@ class _WalkingEventScreenState extends State<WalkingEventScreen>
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
+
     _tabController = TabController(length: 2, vsync: this);
     isAdmin = CurrentUser.instance.member?.mRole == 'ADMIN';
     _loadData();

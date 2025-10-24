@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:with_walk/api/model/inquiry.dart';
 import 'package:with_walk/api/service/customer_service.dart';
-import 'package:with_walk/theme/colors.dart';
+import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/views/screens/customer/inquiry_detail_screen.dart';
 
 class InquiryListScreen extends StatefulWidget {
@@ -16,14 +16,14 @@ class InquiryListScreen extends StatefulWidget {
 }
 
 class _InquiryListScreenState extends State<InquiryListScreen> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
   List<Inquiry> inquiryList = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
+
     _loadInquiries();
   }
 

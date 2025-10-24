@@ -12,7 +12,7 @@ import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/api/service/post_service.dart';
 import 'package:with_walk/functions/state_fn.dart';
 
-import 'package:with_walk/theme/colors.dart';
+import 'package:with_walk/functions/data.dart';
 
 // ========== 게시글 작성 바텀시트 ==========
 class CreatePostBottomSheet extends StatefulWidget {
@@ -173,7 +173,7 @@ class _CreatePostBottomSheetState extends State<CreatePostBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final current = themeMap["라이트"]!;
+    final current = ThemeManager().current;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,

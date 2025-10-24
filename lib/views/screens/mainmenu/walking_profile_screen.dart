@@ -5,9 +5,11 @@ import 'package:with_walk/api/service/street_service.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/functions/state_fn.dart';
 import 'package:with_walk/functions/widegt_fn.dart';
-import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 import 'package:with_walk/views/dialogs/profile_change.dart';
+import 'package:with_walk/views/screens/customer/faq_list_screen.dart';
+import 'package:with_walk/views/screens/customer/inquiry_create_screen.dart';
+import 'package:with_walk/views/screens/customer/notice_list_screen.dart';
 import 'package:with_walk/views/screens/customer_center_screen.dart';
 import 'package:with_walk/views/screens/login_screen.dart';
 import 'package:with_walk/views/screens/membership_update_screen.dart';
@@ -24,7 +26,7 @@ class WalkingProfileScreen extends StatefulWidget {
 }
 
 class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
 
   // 팔로우 정보
   int followerCount = 0;
@@ -37,7 +39,7 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
+
     _loadProfileData();
   }
 
@@ -307,7 +309,12 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
                             _MenuItemData(
                               icon: Icons.campaign_rounded,
                               title: '공지사항',
-                              onTap: () {},
+                              onTap: () {
+                                openScreen(
+                                  context,
+                                  (context) => NoticeListScreen(),
+                                );
+                              },
                             ),
                             _MenuItemData(
                               icon: Icons.support_agent_rounded,
@@ -322,12 +329,22 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
                             _MenuItemData(
                               icon: Icons.help_outline_rounded,
                               title: '자주 묻는 질문(FAQ)',
-                              onTap: () {},
+                              onTap: () {
+                                openScreen(
+                                  context,
+                                  (context) => FaqListScreen(),
+                                );
+                              },
                             ),
                             _MenuItemData(
                               icon: Icons.chat_bubble_outline_rounded,
                               title: '문의하기 / 1:1 상담',
-                              onTap: () {},
+                              onTap: () {
+                                openScreen(
+                                  context,
+                                  (context) => InquiryCreateScreen(),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -456,7 +473,7 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
                   Divider(height: 1, indent: 60.w, color: Colors.grey[200]),
               ],
             );
-          }).toList(),
+          }),
         ],
       ),
     );

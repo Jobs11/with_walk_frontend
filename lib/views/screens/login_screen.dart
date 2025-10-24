@@ -5,7 +5,6 @@ import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/functions/widegt_fn.dart';
 import 'package:with_walk/views/screens/mainhome_screen.dart';
 import 'package:with_walk/views/screens/membership_screen.dart';
-import 'package:with_walk/theme/colors.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -16,7 +15,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
   bool isLogin = false;
 
   final passwordController = TextEditingController();
@@ -25,7 +24,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
   }
 
   Future<void> _login() async {

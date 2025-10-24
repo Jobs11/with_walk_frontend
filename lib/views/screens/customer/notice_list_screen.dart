@@ -3,7 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:with_walk/api/model/notice.dart';
 import 'package:with_walk/api/service/customer_service.dart';
+import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/theme/colors.dart';
+import 'package:with_walk/views/screens/admin/create_notice_screen.dart';
 import 'package:with_walk/views/screens/customer/notice_detail.screen.dart';
 
 class NoticeListScreen extends StatefulWidget {
@@ -51,6 +53,8 @@ class _NoticeListScreenState extends State<NoticeListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = CurrentUser.instance.member?.mRole == 'ADMIN';
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.grey[50],
@@ -69,6 +73,26 @@ class _NoticeListScreenState extends State<NoticeListScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
+          actions: [
+            if (isAdmin)
+              IconButton(
+                icon: Icon(Icons.add_circle, color: current.accent),
+                onPressed: () async {
+                  // ✅ 공지 작성 화면으로 이동
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CreateNoticeScreen(),
+                    ),
+                  );
+
+                  // 작성 완료 후 새로고침
+                  if (result == true) {
+                    _loadNotices();
+                  }
+                },
+              ),
+          ],
         ),
         body: isLoading
             ? Center(child: CircularProgressIndicator())

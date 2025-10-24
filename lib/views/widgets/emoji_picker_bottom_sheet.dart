@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/api/model/badge_emoji.dart';
 import 'package:with_walk/api/service/badge_emoji_service.dart';
 
-import 'package:with_walk/theme/colors.dart';
+import 'package:with_walk/functions/data.dart';
 
 class EmojiPickerBottomSheet extends StatefulWidget {
   final Function(String) onEmojiSelected;
@@ -16,7 +16,7 @@ class EmojiPickerBottomSheet extends StatefulWidget {
 
 class _EmojiPickerBottomSheetState extends State<EmojiPickerBottomSheet>
     with SingleTickerProviderStateMixin {
-  late ThemeColors current;
+  final current = ThemeManager().current;
   late TabController _tabController;
 
   final List<Map<String, String>> _categories = [
@@ -34,7 +34,7 @@ class _EmojiPickerBottomSheetState extends State<EmojiPickerBottomSheet>
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
+
     _tabController = TabController(length: _categories.length, vsync: this);
   }
 

@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/api/model/faq.dart';
 import 'package:with_walk/api/service/customer_service.dart';
 import 'package:with_walk/functions/data.dart';
-import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/screens/admin/admin_inquiry_list_screen.dart';
 import 'package:with_walk/views/screens/customer/faq_list_screen.dart';
 import 'package:with_walk/views/screens/customer/feq_detail_screen.dart';
@@ -19,7 +18,7 @@ class CustomerCenterScreen extends StatefulWidget {
 }
 
 class _CustomerCenterScreenState extends State<CustomerCenterScreen> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
   final TextEditingController _searchController = TextEditingController();
 
   String selectedCategory = '전체';
@@ -31,7 +30,7 @@ class _CustomerCenterScreenState extends State<CustomerCenterScreen> {
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
+
     _loadFaqs();
   }
 

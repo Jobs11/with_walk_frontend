@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/api/model/faq.dart';
-import 'package:with_walk/theme/colors.dart';
+import 'package:with_walk/functions/data.dart';
 
 class FaqDetailScreen extends StatelessWidget {
   final Faq faq;
@@ -10,7 +10,7 @@ class FaqDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final current = themeMap["라이트"]!;
+    final current = ThemeManager().current;
 
     return SafeArea(
       child: Scaffold(

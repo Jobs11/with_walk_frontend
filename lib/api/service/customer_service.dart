@@ -72,6 +72,53 @@ class CustomerService {
     throw Exception('공지사항 상세 조회 실패: ${response.statusCode}');
   }
 
+  /// 공지사항 등록 (관리자용)
+  static Future<int> createNotice(Notice notice) async {
+    final url = Uri.parse('${Baseurl.b}$manual/notices');
+
+    final res = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json; charset=utf-8'},
+          body: jsonEncode(notice.toJson()),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (res.statusCode == 201 || res.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(res.bodyBytes));
+      return data['notice_id'] as int;
+    }
+    throw Exception('공지사항 등록 실패: ${res.statusCode} ${res.body}');
+  }
+
+  /// 공지사항 수정 (관리자용)
+  static Future<void> updateNotice(int noticeId, Notice notice) async {
+    final url = Uri.parse('${Baseurl.b}$manual/notices/$noticeId');
+
+    final res = await http
+        .put(
+          url,
+          headers: {'Content-Type': 'application/json; charset=utf-8'},
+          body: jsonEncode(notice.toJson()),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (res.statusCode != 200) {
+      throw Exception('공지사항 수정 실패: ${res.statusCode} ${res.body}');
+    }
+  }
+
+  /// 공지사항 삭제 (관리자용)
+  static Future<void> deleteNotice(int noticeId) async {
+    final url = Uri.parse('${Baseurl.b}$manual/notices/$noticeId');
+
+    final res = await http.delete(url).timeout(const Duration(seconds: 10));
+
+    if (res.statusCode != 200) {
+      throw Exception('공지사항 삭제 실패: ${res.statusCode} ${res.body}');
+    }
+  }
+
   // ========================================
   // FAQ API
   // ========================================

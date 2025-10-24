@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:with_walk/theme/colors.dart';
+import 'package:with_walk/functions/data.dart';
 
 /// 오늘을 중심으로 ±3일을 보여주는 날짜 선택 위젯
 class CenteredDatePicker extends StatefulWidget {
@@ -18,13 +18,13 @@ class CenteredDatePicker extends StatefulWidget {
 class _CenteredDatePickerState extends State<CenteredDatePicker> {
   late DateTime centerDate; // 중심 날짜 (처음엔 오늘)
   late DateTime selectedDate;
-  late ThemeColors current;
+  final current = ThemeManager().current;
   bool _isLocaleInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
+
     final now = DateTime.now();
     centerDate = DateTime(now.year, now.month, now.day); // 시간 제거
     selectedDate = centerDate;

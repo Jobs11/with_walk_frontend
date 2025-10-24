@@ -5,7 +5,6 @@ import 'package:with_walk/api/model/inquiry.dart';
 import 'package:with_walk/api/model/inquiry_reply.dart';
 import 'package:with_walk/api/service/customer_service.dart';
 import 'package:with_walk/functions/data.dart';
-import 'package:with_walk/theme/colors.dart';
 
 class AdminInquiryDetailScreen extends StatefulWidget {
   final int inquiryId;
@@ -23,7 +22,7 @@ class AdminInquiryDetailScreen extends StatefulWidget {
 }
 
 class _AdminInquiryDetailScreenState extends State<AdminInquiryDetailScreen> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
   final _replyController = TextEditingController();
 
   Inquiry? inquiry;
@@ -33,7 +32,7 @@ class _AdminInquiryDetailScreenState extends State<AdminInquiryDetailScreen> {
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
+
     _loadInquiryDetail();
   }
 

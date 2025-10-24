@@ -8,7 +8,7 @@ import 'package:with_walk/api/service/post_service.dart';
 import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/api/model/member_nickname.dart';
 
-import 'package:with_walk/theme/colors.dart';
+import 'package:with_walk/functions/data.dart';
 
 class EditPostBottomSheet extends StatefulWidget {
   final Post post;
@@ -181,7 +181,7 @@ class _EditPostBottomSheetState extends State<EditPostBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final current = themeMap["라이트"]!;
+    final current = ThemeManager().current;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,

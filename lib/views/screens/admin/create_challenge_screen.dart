@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/api/model/challenge.dart';
 import 'package:with_walk/api/service/challenge_service.dart';
-import 'package:with_walk/theme/colors.dart';
+import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 import 'package:with_walk/views/widgets/emoji_picker_bottom_sheet.dart';
 
@@ -14,7 +14,7 @@ class CreateChallengeScreen extends StatefulWidget {
 }
 
 class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -35,7 +35,6 @@ class _CreateChallengeScreenState extends State<CreateChallengeScreen> {
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
   }
 
   @override

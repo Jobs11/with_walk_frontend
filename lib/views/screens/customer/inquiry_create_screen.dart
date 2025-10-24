@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/api/model/inquiry.dart';
 import 'package:with_walk/api/service/customer_service.dart';
 import 'package:with_walk/functions/data.dart';
-import 'package:with_walk/theme/colors.dart';
 
 class InquiryCreateScreen extends StatefulWidget {
   const InquiryCreateScreen({super.key});
@@ -13,7 +12,7 @@ class InquiryCreateScreen extends StatefulWidget {
 }
 
 class _InquiryCreateScreenState extends State<InquiryCreateScreen> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
 
@@ -25,7 +24,6 @@ class _InquiryCreateScreenState extends State<InquiryCreateScreen> {
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
   }
 
   Future<void> _submitInquiry() async {

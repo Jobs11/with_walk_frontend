@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
-
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/views/screens/login_screen.dart';
 

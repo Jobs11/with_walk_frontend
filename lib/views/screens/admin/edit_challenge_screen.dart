@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/api/model/challenge.dart';
 import 'package:with_walk/api/service/challenge_service.dart';
-import 'package:with_walk/theme/colors.dart';
+import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 
 class EditChallengeScreen extends StatefulWidget {
@@ -15,7 +15,7 @@ class EditChallengeScreen extends StatefulWidget {
 }
 
 class _EditChallengeScreenState extends State<EditChallengeScreen> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -37,7 +37,6 @@ class _EditChallengeScreenState extends State<EditChallengeScreen> {
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
 
     // 기존 챌린지 데이터로 초기화
     _titleController = TextEditingController(text: widget.challenge.cTitle);

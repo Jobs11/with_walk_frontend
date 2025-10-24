@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/api/model/faq.dart';
 import 'package:with_walk/api/service/customer_service.dart';
-import 'package:with_walk/theme/colors.dart';
+import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/views/screens/customer/feq_detail_screen.dart';
 
 class FaqListScreen extends StatefulWidget {
@@ -13,7 +13,7 @@ class FaqListScreen extends StatefulWidget {
 }
 
 class _FaqListScreenState extends State<FaqListScreen> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
   List<Faq> faqList = [];
   bool isLoading = true;
   String selectedCategory = '전체';
@@ -23,7 +23,7 @@ class _FaqListScreenState extends State<FaqListScreen> {
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
+
     _loadFaqs();
   }
 

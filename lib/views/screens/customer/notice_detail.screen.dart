@@ -3,7 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:with_walk/api/model/notice.dart';
 import 'package:with_walk/api/service/customer_service.dart';
-import 'package:with_walk/theme/colors.dart';
+import 'package:with_walk/functions/data.dart';
+import 'package:with_walk/views/screens/admin/edit_notice_screen.dart';
 
 class NoticeDetailScreen extends StatefulWidget {
   final int noticeId;
@@ -15,14 +16,13 @@ class NoticeDetailScreen extends StatefulWidget {
 }
 
 class _NoticeDetailScreenState extends State<NoticeDetailScreen> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
   Notice? notice;
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
     _loadNoticeDetail();
   }
 
@@ -48,6 +48,8 @@ class _NoticeDetailScreenState extends State<NoticeDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = CurrentUser.instance.member?.mRole == 'ADMIN';
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -66,6 +68,42 @@ class _NoticeDetailScreenState extends State<NoticeDetailScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
+          actions: [
+            // ✅ 관리자만 수정/삭제 버튼 표시
+            if (isAdmin && notice != null)
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert, color: Colors.black),
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    _editNotice();
+                  } else if (value == 'delete') {
+                    _deleteNotice();
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, size: 20.sp, color: Colors.blue),
+                        SizedBox(width: 8.w),
+                        Text('수정'),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, size: 20.sp, color: Colors.red),
+                        SizedBox(width: 8.w),
+                        Text('삭제', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+          ],
         ),
         body: isLoading
             ? Center(child: CircularProgressIndicator())
@@ -183,5 +221,67 @@ class _NoticeDetailScreenState extends State<NoticeDetailScreen> {
               ),
       ),
     );
+  }
+
+  // ✅ 공지사항 수정
+  Future<void> _editNotice() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditNoticeScreen(notice: notice!),
+      ),
+    );
+
+    // 수정 완료 후 새로고침
+    if (result == true) {
+      _loadNoticeDetail();
+    }
+  }
+
+  // ✅ 공지사항 삭제
+  Future<void> _deleteNotice() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('공지사항 삭제'),
+        content: Text('${notice!.title}\n\n이 공지사항을 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      // 삭제 API 호출
+      await CustomerService.deleteNotice(widget.noticeId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('공지사항이 삭제되었습니다'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // 목록 화면으로 돌아가기 (새로고침 트리거)
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('삭제 실패: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 }

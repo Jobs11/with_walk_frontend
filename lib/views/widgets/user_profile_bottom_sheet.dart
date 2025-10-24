@@ -150,7 +150,7 @@ class _UserProfileBottomSheetState extends State<UserProfileBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final current = themeMap["라이트"]!;
+    final current = ThemeManager().current;
     final isMyProfile = widget.userId == CurrentUser.instance.member?.mId;
 
     return Container(
@@ -454,7 +454,7 @@ class _UserProfileBottomSheetState extends State<UserProfileBottomSheet> {
   }
 
   Widget _buildFollowStat(String label, int count) {
-    final current = themeMap["라이트"]!;
+    final current = ThemeManager().current;
     return Column(
       children: [
         Text(

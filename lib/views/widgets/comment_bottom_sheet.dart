@@ -344,7 +344,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final current = themeMap["라이트"]!;
+    final current = ThemeManager().current;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,

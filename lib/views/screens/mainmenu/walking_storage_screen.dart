@@ -8,7 +8,6 @@ import 'package:with_walk/api/service/street_service.dart';
 import 'package:with_walk/api/service/weekly_goal_service.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/functions/state_fn.dart';
-import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 import 'package:with_walk/views/widgets/centered_date_picker.dart';
 
@@ -20,7 +19,7 @@ class WalkingStorageScreen extends StatefulWidget {
 }
 
 class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
   DateTime selectedDate = DateTime.now();
   Map<DateTime, bool> recordDates = {};
 
@@ -31,7 +30,7 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
+
     _loadRecordDates();
     _loadWeeklyGoal();
     streets = StreetService.getStreetList(

@@ -140,7 +140,7 @@ class _PostCardState extends State<PostCard> {
 
   // 게시글 옵션 메뉴 표시
   void _showPostOptions(BuildContext context) {
-    final current = themeMap["라이트"]!;
+    final current = ThemeManager().current;
 
     showModalBottomSheet(
       context: context,
@@ -346,7 +346,7 @@ class _PostCardState extends State<PostCard> {
 
   @override
   Widget build(BuildContext context) {
-    final current = themeMap["라이트"]!;
+    final current = ThemeManager().current;
     final commentCount = widget.post.commentCount;
     final isMyPost = widget.post.mId == CurrentUser.instance.member?.mId;
 

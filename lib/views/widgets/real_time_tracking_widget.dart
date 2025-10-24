@@ -8,7 +8,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:with_walk/api/model/street.dart';
 import 'package:with_walk/api/service/street_service.dart';
 import 'package:with_walk/functions/data.dart';
-import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 
 class RealTimeTrackingWidget extends StatefulWidget {
@@ -38,7 +37,7 @@ class RealTimeTrackingWidget extends StatefulWidget {
 }
 
 class _RealTimeTrackingWidgetState extends State<RealTimeTrackingWidget> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
 
   // 지도 관련
   NaverMapController? _controller;
@@ -82,7 +81,7 @@ class _RealTimeTrackingWidgetState extends State<RealTimeTrackingWidget> {
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
+
     _mapReady = Completer<NaverMapController>();
     _naver = widget.naverService; // ✅ NaverService 저장
   }

@@ -4,7 +4,6 @@ import 'package:with_walk/api/model/post.dart';
 import 'package:with_walk/api/service/post_service.dart';
 import 'package:with_walk/api/service/street_service.dart';
 import 'package:with_walk/functions/data.dart';
-import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 import 'package:with_walk/views/widgets/create_post_bottom_sheet.dart';
 import 'package:with_walk/views/widgets/post_card.dart';
@@ -17,14 +16,14 @@ class WalkingTalkScreen extends StatefulWidget {
 }
 
 class _WalkingTalkScreenState extends State<WalkingTalkScreen> {
-  late ThemeColors current;
+  final current = ThemeManager().current;
   late Future<List<Post>> _postsFuture;
   int _selectedTabIndex = 0; // 0: 전체, 1: 인기, 2: 친구
 
   @override
   void initState() {
     super.initState();
-    current = themeMap["라이트"]!;
+
     _loadPosts();
   }
 
