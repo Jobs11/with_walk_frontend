@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:with_walk/api/model/ranking_user.dart';
 import 'package:with_walk/api/model/street.dart';
 import 'package:with_walk/functions/data.dart';
 
@@ -10,6 +11,7 @@ class StreetService {
   static const String getListStreet = "getlist";
   static const String getAllStreet = "getalllist";
   static const String deleteStreet = "delete";
+  static const String getWeeklyTop3 = "ranking/weekly/top3";
 
   static Future<void> registerS(Street street) async {
     final url = Uri.parse("${Baseurl.b}$menual/$registerStreet");
@@ -76,5 +78,27 @@ class StreetService {
     if (res.statusCode != 200) {
       throw Exception("deleteStreet failed: ${res.statusCode} ${res.body}");
     }
+  }
+
+  static Future<List<RankingUser>> getTop3() async {
+    List<RankingUser> rankingList = [];
+
+    final url = Uri.parse('${Baseurl.b}$menual/$getWeeklyTop3');
+
+    final response = await http.get(url).timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> rankings = jsonDecode(
+        utf8.decode(response.bodyBytes),
+      );
+
+      for (var ranking in rankings) {
+        rankingList.add(RankingUser.fromJson(ranking));
+      }
+
+      return rankingList;
+    }
+
+    throw Exception('Failed to load ranking: ${response.statusCode}');
   }
 }

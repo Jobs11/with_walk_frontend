@@ -217,10 +217,9 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
 
                   // 버튼들
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    padding: EdgeInsets.symmetric(horizontal: 40.w),
                     child: Column(
                       children: [
-                        // 상세 프로필 보기 버튼
                         SizedBox(
                           width: double.infinity,
                           height: 44.h,
@@ -294,98 +293,103 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
                     ),
                   ),
 
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 24.h),
 
-                  // 설정 메뉴들
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  // ✅ 카드형 설정 메뉴들
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
                     child: Column(
                       children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            '고객지원',
-                            style: TextStyle(
-                              color: current.fontThird,
-                              fontSize: 22.sp,
-                              fontWeight: FontWeight.bold,
+                        // 고객지원 섹션
+                        _buildMenuSection(
+                          title: '고객지원',
+                          items: [
+                            _MenuItemData(
+                              icon: Icons.campaign_rounded,
+                              title: '공지사항',
+                              onTap: () {},
                             ),
-                          ),
+                            _MenuItemData(
+                              icon: Icons.support_agent_rounded,
+                              title: '고객센터',
+                              onTap: () {
+                                openScreen(
+                                  context,
+                                  (context) => CustomerCenterScreen(),
+                                );
+                              },
+                            ),
+                            _MenuItemData(
+                              icon: Icons.help_outline_rounded,
+                              title: '자주 묻는 질문(FAQ)',
+                              onTap: () {},
+                            ),
+                            _MenuItemData(
+                              icon: Icons.chat_bubble_outline_rounded,
+                              title: '문의하기 / 1:1 상담',
+                              onTap: () {},
+                            ),
+                          ],
                         ),
-                        Container(
-                          width: double.infinity,
-                          height: 2.h,
-                          decoration: BoxDecoration(color: current.fontThird),
-                        ),
-                        SizedBox(height: 10.h),
-                        settingrow('공지사항'),
-                        SizedBox(height: 5.h),
-                        GestureDetector(
-                          onTap: () {
-                            openScreen(
-                              context,
-                              (context) => CustomerCenterScreen(),
-                            );
-                          },
-                          child: settingrow('고객센터'),
-                        ),
-                        SizedBox(height: 5.h),
-                        settingrow('자주 묻는 질문(FAQ)'),
-                        SizedBox(height: 5.h),
-                        settingrow('문의하기 / 1:1 상담'),
-                        SizedBox(height: 15.h),
 
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            '앱 정보',
-                            style: TextStyle(
-                              color: current.fontThird,
-                              fontSize: 22.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          width: double.infinity,
-                          height: 2.h,
-                          decoration: BoxDecoration(color: current.fontThird),
-                        ),
-                        SizedBox(height: 10.h),
-                        settingrow('어플리케이션 정보'),
-                        SizedBox(height: 5.h),
-                        settingrow('버전 정보 & 업데이트 확인'),
-                        SizedBox(height: 5.h),
-                        settingrow('이용약관'),
-                        SizedBox(height: 5.h),
-                        settingrow('개인정보 처리방침'),
-                        SizedBox(height: 15.h),
+                        SizedBox(height: 16.h),
 
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            '기타',
-                            style: TextStyle(
-                              color: current.fontThird,
-                              fontSize: 22.sp,
-                              fontWeight: FontWeight.bold,
+                        // 앱 정보 섹션
+                        _buildMenuSection(
+                          title: '앱 정보',
+                          items: [
+                            _MenuItemData(
+                              icon: Icons.info_outline_rounded,
+                              title: '어플리케이션 정보',
+                              onTap: () {},
                             ),
-                          ),
+                            _MenuItemData(
+                              icon: Icons.system_update_rounded,
+                              title: '버전 정보 & 업데이트 확인',
+                              onTap: () {},
+                            ),
+                            _MenuItemData(
+                              icon: Icons.description_outlined,
+                              title: '이용약관',
+                              onTap: () {},
+                            ),
+                            _MenuItemData(
+                              icon: Icons.privacy_tip_outlined,
+                              title: '개인정보 처리방침',
+                              onTap: () {},
+                            ),
+                          ],
                         ),
-                        Container(
-                          width: double.infinity,
-                          height: 2.h,
-                          decoration: BoxDecoration(color: current.fontThird),
+
+                        SizedBox(height: 16.h),
+
+                        // 기타 섹션
+                        _buildMenuSection(
+                          title: '기타',
+                          items: [
+                            _MenuItemData(
+                              icon: Icons.palette_outlined,
+                              title: '테마 설정',
+                              onTap: () {},
+                            ),
+                            _MenuItemData(
+                              icon: Icons.notifications_outlined,
+                              title: '알림 설정',
+                              onTap: () {},
+                            ),
+                            _MenuItemData(
+                              icon: Icons.language_rounded,
+                              title: '언어 설정',
+                              onTap: () {},
+                            ),
+                            _MenuItemData(
+                              icon: Icons.science_outlined,
+                              title: '실험실',
+                              onTap: () {},
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 10.h),
-                        settingrow('테마 설정'),
-                        SizedBox(height: 5.h),
-                        settingrow('알림 설정'),
-                        SizedBox(height: 5.h),
-                        settingrow('언어 설정'),
-                        SizedBox(height: 5.h),
-                        settingrow('실험실'),
+
                         SizedBox(height: 30.h),
                       ],
                     ),
@@ -395,6 +399,118 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ✅ 메뉴 섹션 빌더
+  Widget _buildMenuSection({
+    required String title,
+    required List<_MenuItemData> items,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 섹션 헤더
+          Padding(
+            padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 12.h),
+            child: Text(
+              title,
+              style: TextStyle(
+                color: current.fontThird,
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          // 구분선
+          Divider(height: 1, color: Colors.grey[300]),
+
+          // 메뉴 아이템들
+          ...items.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+            final isLast = index == items.length - 1;
+
+            return Column(
+              children: [
+                _buildMenuItem(
+                  icon: item.icon,
+                  title: item.title,
+                  onTap: item.onTap,
+                ),
+                if (!isLast)
+                  Divider(height: 1, indent: 60.w, color: Colors.grey[200]),
+              ],
+            );
+          }).toList(),
+        ],
+      ),
+    );
+  }
+
+  // ✅ 메뉴 아이템 빌더
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12.r),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+          child: Row(
+            children: [
+              // 아이콘
+              Container(
+                width: 40.w,
+                height: 40.h,
+                decoration: BoxDecoration(
+                  color: current.accent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Icon(icon, size: 22.sp, color: current.accent),
+              ),
+
+              SizedBox(width: 16.w),
+
+              // 제목
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    color: current.fontThird,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+
+              // 화살표
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 24.sp,
+                color: Colors.grey[400],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -418,25 +534,13 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
       ],
     );
   }
+}
 
-  Row settingrow(String title) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 15.sp,
-            color: current.fontThird,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Image.asset(
-          'assets/images/icons/setting_arrow.png',
-          width: 15.w,
-          height: 15.h,
-        ),
-      ],
-    );
-  }
+// ✅ 메뉴 아이템 데이터 클래스
+class _MenuItemData {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  _MenuItemData({required this.icon, required this.title, required this.onTap});
 }

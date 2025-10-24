@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/api/model/challenge.dart';
 import 'package:with_walk/api/model/challenge_participant.dart';
+import 'package:with_walk/api/model/ranking_user.dart';
 import 'package:with_walk/api/service/challenge_service.dart';
+import 'package:with_walk/api/service/member_service.dart';
+import 'package:with_walk/api/service/street_service.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/theme/colors.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 import 'package:with_walk/views/screens/admin/create_challenge_screen.dart';
 import 'package:with_walk/views/screens/admin/edit_challenge_screen.dart';
+import 'package:with_walk/views/widgets/user_profile_bottom_sheet.dart';
 
 class WalkingEventScreen extends StatefulWidget {
   const WalkingEventScreen({super.key});
@@ -23,6 +27,7 @@ class _WalkingEventScreenState extends State<WalkingEventScreen>
 
   late Future<List<Challenge>> _activeChallengesFuture;
   late Future<List<ChallengeParticipant>> _myCompletedChallengesFuture;
+  late Future<List<RankingUser>> _rankingFuture;
   bool isAdmin = false;
 
   @override
@@ -41,6 +46,7 @@ class _WalkingEventScreenState extends State<WalkingEventScreen>
       _myCompletedChallengesFuture = ChallengeService.getMyCompletedChallenges(
         userId,
       );
+      _rankingFuture = StreetService.getTop3();
     });
   }
 
@@ -48,6 +54,22 @@ class _WalkingEventScreenState extends State<WalkingEventScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _showUserProfile(BuildContext context, String userId) async {
+    final user = await Memberservice.userdata(userId);
+
+    showModalBottomSheet(
+      // ignore: use_build_context_synchronously
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => UserProfileBottomSheet(
+        userId: userId,
+        userName: user.mName,
+        userImage: user.mProfileImage,
+      ),
+    );
   }
 
   @override
@@ -198,9 +220,15 @@ class _WalkingEventScreenState extends State<WalkingEventScreen>
 
           return ListView.builder(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
-            itemCount: challenges.length,
+            itemCount: challenges.length + 1,
             itemBuilder: (context, index) {
-              final challenge = challenges[index];
+              if (index == 0) {
+                return Padding(
+                  padding: EdgeInsets.only(bottom: 16.h),
+                  child: _buildTop3RankingCard(),
+                );
+              }
+              final challenge = challenges[index - 1];
               return Padding(
                 padding: EdgeInsets.only(bottom: 12.h),
                 child: _buildChallengeCard(challenge),
@@ -634,5 +662,223 @@ class _WalkingEventScreenState extends State<WalkingEventScreen>
         ),
       );
     }
+  }
+
+  // ✅ TOP 3 랭킹 카드 (실제 데이터)
+  Widget _buildTop3RankingCard() {
+    return FutureBuilder<List<RankingUser>>(
+      future: _rankingFuture,
+      builder: (context, snapshot) {
+        // 로딩 중
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            padding: EdgeInsets.all(20.w),
+            decoration: BoxDecoration(
+              color: current.bg.withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // 에러 발생
+        if (snapshot.hasError) {
+          return Container(
+            padding: EdgeInsets.all(20.w),
+            decoration: BoxDecoration(
+              color: current.bg.withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Center(
+              child: Text(
+                '랭킹을 불러올 수 없습니다',
+                style: TextStyle(fontSize: 14.sp, color: current.fontSecondary),
+              ),
+            ),
+          );
+        }
+
+        final rankings = snapshot.data ?? [];
+
+        // 데이터가 없을 때
+        if (rankings.isEmpty) {
+          return Container(
+            padding: EdgeInsets.all(20.w),
+            decoration: BoxDecoration(
+              color: current.bg.withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Center(
+              child: Text(
+                '이번 주 기록이 없습니다',
+                style: TextStyle(fontSize: 14.sp, color: current.fontSecondary),
+              ),
+            ),
+          );
+        }
+
+        // 랭킹 데이터 표시
+        final emojis = ['🥇', '🥈', '🥉'];
+
+        return Container(
+          padding: EdgeInsets.all(20.w),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                current.accent.withValues(alpha: 0.15),
+                current.accent.withValues(alpha: 0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(
+              color: current.accent.withValues(alpha: 0.3),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: current.accent.withValues(alpha: 0.1),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // 헤더
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.emoji_events,
+                        color: current.accent,
+                        size: 24.sp,
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        '이번 주 TOP 3',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                          color: current.fontPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 4.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: current.accent.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Text(
+                      '실시간',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: current.accent,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20.h),
+
+              // 랭킹 리스트
+              ...rankings.asMap().entries.map((entry) {
+                final index = entry.key;
+                final user = entry.value;
+                final isFirst = index == 0;
+                final emoji = index < emojis.length ? emojis[index] : '🏅';
+
+                return Padding(
+                  padding: EdgeInsets.only(bottom: 12.h),
+                  child: GestureDetector(
+                    onTap: () {
+                      _showUserProfile(context, user.mName);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: isFirst
+                            ? current.accent.withValues(alpha: 0.1)
+                            : current.bg.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: isFirst
+                            ? Border.all(
+                                color: current.accent.withValues(alpha: 0.3),
+                                width: 2,
+                              )
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          // 메달
+                          Text(emoji, style: TextStyle(fontSize: 32.sp)),
+                          SizedBox(width: 16.w),
+
+                          // 이름
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user.mName,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: current.fontPrimary,
+                                  ),
+                                ),
+                                SizedBox(height: 2.h),
+                                Text(
+                                  '${user.rank}위',
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: current.fontSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // 거리
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${user.totalDistance.toStringAsFixed(1)}km',
+                                style: TextStyle(
+                                  fontSize: 20.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: current.accent,
+                                ),
+                              ),
+                              Text(
+                                '이번 주',
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: current.fontThird,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
