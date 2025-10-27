@@ -32,10 +32,13 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
   late Future<List<PostComment>> _commentsFuture;
   bool _isSubmitting = false;
 
-  // 태그 관련 추가
+  // 태그 관련
   List<MemberNickname> _searchResults = [];
   final List<String> _taggedNicknames = [];
   bool _showTagSuggestions = false;
+
+  // 대댓글 관련
+  PostComment? _replyingTo;
 
   @override
   void initState() {
@@ -44,9 +47,37 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     _commentController.addListener(_onTextChanged);
   }
 
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
   void _loadComments() {
     setState(() {
       _commentsFuture = PostCommentService.getCommentList(widget.pNum);
+    });
+  }
+
+  // 답글 모드 시작
+  void _startReply(PostComment comment) {
+    setState(() {
+      _replyingTo = comment;
+      final nickname = comment.mNickname ?? comment.authorName ?? comment.mId;
+      _commentController.text = '@$nickname ';
+      _commentController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _commentController.text.length),
+      );
+    });
+
+    FocusScope.of(context).requestFocus(FocusNode());
+  }
+
+  // 답글 모드 취소
+  void _cancelReply() {
+    setState(() {
+      _replyingTo = null;
+      _commentController.clear();
     });
   }
 
@@ -122,27 +153,55 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     setState(() => _isSubmitting = true);
 
     try {
-      final comment = PostComment(
-        pNum: widget.pNum,
-        mId: CurrentUser.instance.member!.mId,
-        pcContent: _commentController.text.trim(),
-        pcDate: DateTime.now().toIso8601String(),
-      );
+      // 대댓글 작성
+      if (_replyingTo != null && _replyingTo!.pcNum != null) {
+        final reply = PostComment(
+          pNum: widget.pNum,
+          parentPcNum: _replyingTo!.pcNum,
+          mId: CurrentUser.instance.member!.mId,
+          pcContent: _commentController.text.trim(),
+          pcDate: DateTime.now().toIso8601String(),
+        );
 
-      debugPrint("태그된 사용자: $_taggedNicknames");
+        await PostCommentService.createComment(reply);
 
-      await PostCommentService.createComment(comment);
+        if (!mounted) return;
 
-      if (!mounted) return;
+        _commentController.clear();
+        _taggedNicknames.clear();
+        _cancelReply();
+        _loadComments();
+        widget.onCommentChanged();
 
-      _commentController.clear();
-      _taggedNicknames.clear();
-      _loadComments();
-      widget.onCommentChanged();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('답글이 작성되었습니다')));
+      }
+      // 일반 댓글 작성
+      else {
+        final comment = PostComment(
+          pNum: widget.pNum,
+          parentPcNum: null,
+          mId: CurrentUser.instance.member!.mId,
+          pcContent: _commentController.text.trim(),
+          pcDate: DateTime.now().toIso8601String(),
+        );
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('댓글이 작성되었습니다')));
+        debugPrint("태그된 사용자: $_taggedNicknames");
+
+        await PostCommentService.createComment(comment);
+
+        if (!mounted) return;
+
+        _commentController.clear();
+        _taggedNicknames.clear();
+        _loadComments();
+        widget.onCommentChanged();
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('댓글이 작성되었습니다')));
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -180,30 +239,25 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     final currentUserId = CurrentUser.instance.member?.mId;
     if (currentUserId == null) return;
 
-    // 🔴 원본 값 저장 (롤백용)
     final originalIsLiked = comment.isLiked;
     final originalLikeCount = comment.likeCount;
 
-    // 🔴 1단계: 즉시 UI 업데이트 (낙관적 업데이트)
     setState(() {
       comment.isLiked = !comment.isLiked;
       comment.likeCount += comment.isLiked ? 1 : -1;
     });
 
     try {
-      // 🔴 2단계: 백엔드 API 호출
       final result = await PostCommentLikeService.toggleLike(
         comment.pcNum!,
         currentUserId,
       );
 
-      // 🔴 3단계: 백엔드 응답으로 정확한 값 업데이트
       if (mounted) {
         setState(() {
           comment.isLiked = result['isLiked'] ?? false;
           comment.likeCount = result['likeCount'] ?? 0;
-          comment.isLikedByAuthor =
-              result['isLikedByAuthor'] ?? false; // 🆕 즉시 반영!
+          comment.isLikedByAuthor = result['isLikedByAuthor'] ?? false;
         });
       }
 
@@ -213,36 +267,22 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
         'isLikedByAuthor=${comment.isLikedByAuthor}',
       );
     } catch (e) {
-      // 실패 시 원래대로 되돌림
       if (mounted) {
         setState(() {
           comment.isLiked = originalIsLiked;
           comment.likeCount = originalLikeCount;
         });
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('좋아요 처리 중 오류가 발생했습니다')));
       }
-      debugPrint('❌ 댓글 좋아요 처리 실패: $e');
+      debugPrint('❌ 좋아요 실패: $e');
     }
   }
 
-  void _showUserProfile(BuildContext context, PostComment comment) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => UserProfileBottomSheet(
-        userId: comment.mId,
-        userName: comment.authorName,
-        userImage: comment.authorImage,
-      ),
-    );
-  }
-
-  // 댓글 내용에서 태그 강조 표시
-  Widget _buildCommentWithTags(String content, ThemeColors current) {
+  // ✅ 태그가 포함된 내용 렌더링
+  Widget _buildContentWithTags(
+    String content,
+    ThemeColors current,
+    double fontSize,
+  ) {
     final currentUserNickname = CurrentUser.instance.member?.mNickname;
     final regex = RegExp(r'@(\w+)');
     final matches = regex.allMatches(content);
@@ -250,7 +290,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     if (matches.isEmpty) {
       return Text(
         content,
-        style: TextStyle(fontSize: 14.sp, color: current.fontThird),
+        style: TextStyle(fontSize: fontSize, color: current.fontThird),
       );
     }
 
@@ -262,7 +302,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
         spans.add(
           TextSpan(
             text: content.substring(lastIndex, match.start),
-            style: TextStyle(fontSize: 14.sp, color: current.fontThird),
+            style: TextStyle(fontSize: fontSize, color: current.fontThird),
           ),
         );
       }
@@ -277,7 +317,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
             child: Text(
               '@$taggedNickname',
               style: TextStyle(
-                fontSize: 14.sp,
+                fontSize: fontSize,
                 color: isCurrentUser ? Colors.red : current.accent,
                 fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.w600,
                 backgroundColor: isCurrentUser
@@ -296,7 +336,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       spans.add(
         TextSpan(
           text: content.substring(lastIndex),
-          style: TextStyle(fontSize: 14.sp, color: current.fontThird),
+          style: TextStyle(fontSize: fontSize, color: current.fontThird),
         ),
       );
     }
@@ -304,12 +344,10 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     return RichText(text: TextSpan(children: spans));
   }
 
-  // 태그된 사용자 프로필 표시
-  Future<void> _showTaggedUserProfile(
-    BuildContext context,
-    String nickname,
-  ) async {
+  // ✅ 태그된 사용자 프로필 보기
+  void _showTaggedUserProfile(BuildContext context, String nickname) async {
     try {
+      // 닉네임으로 사용자 정보 조회 (MemberService에 메서드 필요)
       final member = await Memberservice.checkNick(nickname);
 
       if (!mounted) return;
@@ -333,13 +371,6 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       ).showSnackBar(SnackBar(content: Text('사용자 정보를 불러올 수 없습니다')));
       debugPrint('프로필 로드 실패: $e');
     }
-  }
-
-  @override
-  void dispose() {
-    _commentController.removeListener(_onTextChanged);
-    _commentController.dispose();
-    super.dispose();
   }
 
   @override
@@ -368,7 +399,6 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
-                    color: current.fontThird,
                   ),
                 ),
                 IconButton(
@@ -378,6 +408,35 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
               ],
             ),
           ),
+
+          // 답글 작성 중 표시
+          if (_replyingTo != null)
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              color: Colors.blue[50],
+              child: Row(
+                children: [
+                  Icon(Icons.reply, size: 16.sp, color: Colors.blue),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      '${_replyingTo!.mNickname ?? _replyingTo!.authorName ?? _replyingTo!.mId} 님에게 답글 작성 중',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Colors.blue[700],
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _cancelReply,
+                    icon: Icon(Icons.close, size: 18.sp),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+            ),
 
           // 댓글 목록
           Expanded(
@@ -391,8 +450,9 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                 if (snapshot.hasError) {
                   return Center(
                     child: Text(
-                      '댓글을 불러올 수 없습니다',
-                      style: TextStyle(color: current.fontPrimary),
+                      '댓글을 불러올 수 없습니다\n${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey[600]),
                     ),
                   );
                 }
@@ -401,173 +461,46 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
 
                 if (comments.isEmpty) {
                   return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.comment_outlined,
-                          size: 64.sp,
-                          color: Colors.grey,
-                        ),
-                        SizedBox(height: 16.h),
-                        Text(
-                          '첫 댓글을 남겨보세요!',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            color: current.fontPrimary,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      '첫 댓글을 남겨보세요!',
+                      style: TextStyle(color: Colors.grey[600]),
                     ),
                   );
                 }
 
-                return ListView.separated(
-                  padding: EdgeInsets.all(16.w),
+                return ListView.builder(
+                  padding: EdgeInsets.symmetric(vertical: 8.h),
                   itemCount: comments.length,
-                  separatorBuilder: (context, index) => Divider(height: 24.h),
                   itemBuilder: (context, index) {
                     final comment = comments[index];
                     final isMyComment =
                         comment.mId == CurrentUser.instance.member?.mId;
 
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    return Column(
                       children: [
-                        // 프로필 이미지
-                        GestureDetector(
-                          onTap: () => _showUserProfile(context, comment),
-                          child: SmartProfileImage(
-                            imageUrl:
-                                comment.authorImage ??
-                                'assets/images/icons/user.png',
-                            width: 40.w,
-                            height: 40.h,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-
-                        // 댓글 내용
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    comment.authorName ?? comment.mId,
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: current.fontThird,
-                                    ),
-                                  ),
-                                  SizedBox(width: 8.w),
-                                  Text(
-                                    DateFormat(
-                                      'MM.dd HH:mm',
-                                    ).format(DateTime.parse(comment.pcDate)),
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 4.h),
-                              // 태그 강조 적용
-                              _buildCommentWithTags(comment.pcContent, current),
-
-                              // 좋아요 버튼 추가
-                              SizedBox(height: 8.h),
-                              Row(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () => _toggleCommentLike(comment),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          comment.isLiked
-                                              ? Icons.favorite
-                                              : Icons.favorite_border,
-                                          size: 16.sp,
-                                          color: comment.isLiked
-                                              ? Colors.red
-                                              : Colors.grey[600],
-                                        ),
-                                        if (comment.likeCount > 0) ...[
-                                          SizedBox(width: 4.w),
-                                          Text(
-                                            '${comment.likeCount}',
-                                            style: TextStyle(
-                                              fontSize: 12.sp,
-                                              color: Colors.grey[600],
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-
-                                  // 작성자가 좋아요한 경우 표시
-                                  if (comment.isLikedByAuthor) ...[
-                                    SizedBox(width: 8.w),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 6.w,
-                                        vertical: 2.h,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                        borderRadius: BorderRadius.circular(
-                                          12.r,
-                                        ),
-                                        border: Border.all(
-                                          color: Colors.red.withValues(
-                                            alpha: 0.3,
-                                          ),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          SmartProfileImage(
-                                            imageUrl: widget.authorImage,
-                                            width: 14.w,
-                                            height: 14.h,
-                                            fit: BoxFit.cover,
-                                          ),
-
-                                          SizedBox(width: 3.w),
-                                          Icon(
-                                            Icons.favorite,
-                                            size: 12.sp,
-                                            color: Colors.red,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ],
-                          ),
+                        // 부모 댓글
+                        _buildCommentCard(
+                          comment: comment,
+                          isMyComment: isMyComment,
+                          current: current,
+                          isChild: false,
                         ),
 
-                        // 삭제 버튼 (내 댓글만)
-                        if (isMyComment)
-                          IconButton(
-                            onPressed: () => _deleteComment(comment.pcNum!),
-                            icon: Icon(
-                              Icons.delete_outline,
-                              size: 20.sp,
-                              color: Colors.grey,
+                        // 대댓글 리스트 (들여쓰기)
+                        ...comment.childComments.map((childComment) {
+                          final isMyChild =
+                              childComment.mId ==
+                              CurrentUser.instance.member?.mId;
+                          return Padding(
+                            padding: EdgeInsets.only(left: 40.w),
+                            child: _buildCommentCard(
+                              comment: childComment,
+                              isMyComment: isMyChild,
+                              current: current,
+                              isChild: true,
                             ),
-                          ),
+                          );
+                        }),
                       ],
                     );
                   },
@@ -634,7 +567,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                       child: ListView.separated(
                         shrinkWrap: true,
                         itemCount: _searchResults.length,
-                        separatorBuilder: (_, __) => Divider(height: 1),
+                        separatorBuilder: (_, __) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final nickname = _searchResults[index].mNickname;
                           return ListTile(
@@ -661,7 +594,9 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                         child: TextField(
                           controller: _commentController,
                           decoration: InputDecoration(
-                            hintText: '댓글을 입력하세요... (@ 로 태그)',
+                            hintText: _replyingTo != null
+                                ? '답글을 입력하세요...'
+                                : '댓글을 입력하세요... (@ 로 태그)',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24.r),
                               borderSide: BorderSide(color: Colors.grey[300]!),
@@ -697,6 +632,193 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // 댓글 카드 위젯
+  Widget _buildCommentCard({
+    required PostComment comment,
+    required bool isMyComment,
+    required ThemeColors current,
+    required bool isChild,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: isChild ? Colors.grey[50] : Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 프로필 이미지
+          GestureDetector(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => UserProfileBottomSheet(
+                  userId: comment.mId,
+                  userName: comment.authorName,
+                  userImage: comment.authorImage,
+                ),
+              );
+            },
+
+            child: SmartProfileImage(
+              imageUrl: comment.mProfileImage ?? comment.authorImage ?? '',
+              width: isChild ? 32.w : 36.w,
+              height: isChild ? 32.h : 36.h,
+              fit: BoxFit.cover,
+            ),
+          ),
+          SizedBox(width: 12.w),
+
+          // 댓글 내용
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 닉네임
+                Text(
+                  comment.mNickname ?? comment.authorName ?? comment.mId,
+                  style: TextStyle(
+                    fontSize: isChild ? 13.sp : 14.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+
+                // ✅ 태그가 적용된 내용
+                _buildContentWithTags(
+                  comment.pcContent,
+                  current,
+                  isChild ? 12.sp : 13.sp,
+                ),
+                SizedBox(height: 8.h),
+
+                // 하단 액션바
+                Row(
+                  children: [
+                    // 시간
+                    Text(
+                      DateFormat(
+                        'MM.dd HH:mm',
+                      ).format(DateTime.parse(comment.pcDate)),
+                      style: TextStyle(
+                        fontSize: isChild ? 10.sp : 11.sp,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+
+                    // 좋아요 버튼
+                    GestureDetector(
+                      onTap: () => _toggleCommentLike(comment),
+                      child: Row(
+                        children: [
+                          Icon(
+                            comment.isLiked
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            size: isChild ? 14.sp : 16.sp,
+                            color: comment.isLiked
+                                ? Colors.red
+                                : Colors.grey[600],
+                          ),
+                          if (comment.likeCount > 0) ...[
+                            SizedBox(width: 4.w),
+                            Text(
+                              '${comment.likeCount}',
+                              style: TextStyle(
+                                fontSize: isChild ? 11.sp : 12.sp,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    // 답글 버튼 (부모 댓글만)
+                    if (!isChild) ...[
+                      SizedBox(width: 12.w),
+                      GestureDetector(
+                        onTap: () => _startReply(comment),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.reply,
+                              size: 16.sp,
+                              color: Colors.grey[600],
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              '답글',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // 작성자가 좋아요한 경우 표시
+                    if (comment.isLikedByAuthor && !isChild) ...[
+                      SizedBox(width: 8.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6.w,
+                          vertical: 2.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(
+                            color: Colors.red.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SmartProfileImage(
+                              imageUrl: widget.authorImage,
+                              width: 14.w,
+                              height: 14.h,
+                              fit: BoxFit.cover,
+                            ),
+                            SizedBox(width: 3.w),
+                            Icon(
+                              Icons.favorite,
+                              size: 12.sp,
+                              color: Colors.red,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // 삭제 버튼 (내 댓글만)
+          if (isMyComment)
+            IconButton(
+              onPressed: () => _deleteComment(comment.pcNum!),
+              icon: Icon(
+                Icons.delete_outline,
+                size: isChild ? 18.sp : 20.sp,
+                color: Colors.grey,
+              ),
+            ),
         ],
       ),
     );

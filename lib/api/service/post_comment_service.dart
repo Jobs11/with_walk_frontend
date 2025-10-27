@@ -10,7 +10,7 @@ class PostCommentService {
   static const String addComment = "comment";
   static const String delComment = "comment";
 
-  // 댓글 목록 조회
+  // 댓글 목록 조회 (계층 구조)
   static Future<List<PostComment>> getCommentList(int pNum) async {
     try {
       final currentUserId = CurrentUser.instance.member?.mId ?? '';
@@ -23,11 +23,12 @@ class PostCommentService {
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
 
-        final comments = jsonList
+        final allComments = jsonList
             .map((json) => PostComment.fromJson(json))
             .toList();
 
-        return comments;
+        // ✅ 계층 구조로 변환
+        return _buildCommentTree(allComments);
       } else {
         throw Exception('댓글 목록 조회 실패: ${response.statusCode}');
       }
@@ -35,6 +36,25 @@ class PostCommentService {
       debugPrint('❌ 에러 발생: $e');
       throw Exception('댓글 목록 조회 중 오류 발생: $e');
     }
+  }
+
+  // ✅ 계층 구조 변환 함수
+  static List<PostComment> _buildCommentTree(List<PostComment> flatList) {
+    // 부모 댓글만 필터링
+    final parentComments = flatList
+        .where((c) => c.parentPcNum == null)
+        .toList();
+
+    // 각 부모 댓글에 대댓글 연결
+    for (var parent in parentComments) {
+      final children = flatList
+          .where((c) => c.parentPcNum == parent.pcNum)
+          .toList();
+
+      parent.childComments = children;
+    }
+
+    return parentComments;
   }
 
   // 댓글 작성
