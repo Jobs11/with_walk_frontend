@@ -20,3 +20,17 @@ String formatTime(int totalSeconds) {
 void openScreen(BuildContext context, WidgetBuilder builder) {
   Navigator.push(context, MaterialPageRoute(builder: builder));
 }
+
+String formatDistance(double meters) {
+  if (meters < 1000) {
+    return '${meters.toStringAsFixed(0)}m';
+  }
+  return '${(meters / 1000).toStringAsFixed(2)}km';
+}
+
+String formatStreetTime(int seconds) {
+  final h = seconds ~/ 3600;
+  final m = (seconds % 3600) ~/ 60;
+  final s = seconds % 60;
+  return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+}

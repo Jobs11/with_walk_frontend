@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:with_walk/api/model/street.dart';
 import 'package:with_walk/api/service/street_service.dart';
 import 'package:with_walk/functions/data.dart';
+import 'package:with_walk/functions/state_fn.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 
 class RealTimeTrackingWidget extends StatefulWidget {
@@ -394,19 +395,6 @@ class _RealTimeTrackingWidgetState extends State<RealTimeTrackingWidget> {
   }
 
   // ========== 포맷 함수들 ==========
-  String _formatDistance(double meters) {
-    if (meters < 1000) {
-      return '${meters.toStringAsFixed(0)}m';
-    }
-    return '${(meters / 1000).toStringAsFixed(2)}km';
-  }
-
-  String _formatTime(int seconds) {
-    final h = seconds ~/ 3600;
-    final m = (seconds % 3600) ~/ 60;
-    final s = seconds % 60;
-    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-  }
 
   String _formatSpeed(double mps) {
     final kmh = mps * 3.6;
@@ -440,8 +428,8 @@ class _RealTimeTrackingWidgetState extends State<RealTimeTrackingWidget> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('거리: ${_formatDistance(_totalDistance)}'),
-            Text('시간: ${_formatTime(_elapsedSeconds)}'),
+            Text('거리: ${formatDistance(_totalDistance)}'),
+            Text('시간: ${formatStreetTime(_elapsedSeconds)}'),
             Text('칼로리: $_calories kcal'),
             Text('평균 속도: ${_formatSpeed(_avgSpeed)}'),
           ],
@@ -483,9 +471,9 @@ class _RealTimeTrackingWidgetState extends State<RealTimeTrackingWidget> {
       mId: CurrentUser.instance.member!.mId,
       rStartTime: _startTime!, // DateTime 그대로 전달
       rEndTime: endTime, // DateTime 그대로 전달
-      rDistance: _totalDistance, // double (미터)
+      rDistance: _totalDistance.ceilToDouble(), // double (미터)
       rTime: _elapsedSeconds.toString(), // String (초)
-      rSpeed: _avgSpeed, // double (m/s)
+      rSpeed: double.parse(_avgSpeed.toStringAsFixed(1)), // double (m/s)
       rKcal: _calories, // int
     );
 
@@ -600,7 +588,7 @@ class _RealTimeTrackingWidgetState extends State<RealTimeTrackingWidget> {
               child: Column(
                 children: [
                   Text(
-                    _formatTime(_elapsedSeconds),
+                    formatStreetTime(_elapsedSeconds),
                     style: TextStyle(
                       fontSize: 32.sp,
                       fontWeight: FontWeight.bold,
@@ -621,7 +609,7 @@ class _RealTimeTrackingWidgetState extends State<RealTimeTrackingWidget> {
                     ),
                   if (_roadDistanceToGoal != null)
                     Text(
-                      '도로 기준 남은 거리: ${_formatDistance(_roadDistanceToGoal!.toDouble())}',
+                      '도로 기준 남은 거리: ${formatDistance(_roadDistanceToGoal!.toDouble())}',
                       style: TextStyle(
                         fontSize: 12.sp,
                         color: Colors.orange,
@@ -630,7 +618,7 @@ class _RealTimeTrackingWidgetState extends State<RealTimeTrackingWidget> {
                     ),
                   if (_distanceToGoal != null && _roadDistanceToGoal == null)
                     Text(
-                      '직선 거리: ${_formatDistance(_distanceToGoal!)}',
+                      '직선 거리: ${formatDistance(_distanceToGoal!)}',
                       style: TextStyle(fontSize: 12.sp, color: Colors.orange),
                     ),
 
@@ -639,7 +627,7 @@ class _RealTimeTrackingWidgetState extends State<RealTimeTrackingWidget> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _statItem('거리', _formatDistance(_totalDistance)),
+                      _statItem('거리', formatDistance(_totalDistance)),
                       _statItem('속도', _formatSpeed(_currentSpeed)),
                       _statItem('칼로리', '$_calories kcal'),
                     ],

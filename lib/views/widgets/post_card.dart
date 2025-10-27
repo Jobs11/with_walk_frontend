@@ -458,7 +458,7 @@ class _PostCardState extends State<PostCard> {
                         _recordStatItem(
                           icon: Icons.straighten,
                           label: '거리',
-                          value: '${record.rDistance} km',
+                          value: formatDistance(record.rDistance),
                           current: current,
                         ),
                         Container(

@@ -7,6 +7,7 @@ import 'package:with_walk/api/service/challenge_service.dart';
 import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/api/service/street_service.dart';
 import 'package:with_walk/functions/data.dart';
+import 'package:with_walk/functions/state_fn.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 import 'package:with_walk/views/screens/admin/create_challenge_screen.dart';
 import 'package:with_walk/views/screens/admin/edit_challenge_screen.dart';
@@ -852,7 +853,11 @@ class _WalkingEventScreenState extends State<WalkingEventScreen>
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                '${user.totalDistance.toStringAsFixed(1)}km',
+                                formatDistance(
+                                  double.parse(
+                                    user.totalDistance.toStringAsFixed(1),
+                                  ),
+                                ),
                                 style: TextStyle(
                                   fontSize: 20.sp,
                                   fontWeight: FontWeight.bold,

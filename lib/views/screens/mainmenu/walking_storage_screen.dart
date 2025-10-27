@@ -508,7 +508,7 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _statColumn('거리', '${s.rDistance} km'),
+              _statColumn('거리', '${formatDistance(s.rDistance)} '),
               _statColumn('시간', formatTime(int.parse(s.rTime))),
               _statColumn('칼로리', '${s.rKcal} kcal'),
             ],
