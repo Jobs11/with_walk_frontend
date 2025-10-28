@@ -25,7 +25,7 @@ class _CustomerCenterScreenState extends State<CustomerCenterScreen> {
   List<Faq> faqList = [];
   bool isLoading = true;
 
-  final List<String> categories = ['전체', '계정', '결제', '이용방법', '오류/제안', '기타'];
+  final List<String> categories = ['전체', '계정', '결제', '이용방법', '오류 및 제안', '기타'];
 
   @override
   void initState() {

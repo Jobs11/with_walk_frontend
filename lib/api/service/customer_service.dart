@@ -189,6 +189,52 @@ class CustomerService {
     throw Exception('FAQ 상세 조회 실패: ${response.statusCode}');
   }
 
+  static Future<int> createFaq(Faq faq) async {
+    final url = Uri.parse('${Baseurl.b}$manual/faqs');
+
+    final res = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json; charset=utf-8'},
+          body: jsonEncode(faq.toJson()),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (res.statusCode == 201 || res.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(res.bodyBytes));
+      return data['faq_id'] as int;
+    }
+    throw Exception('FAQ 등록 실패: ${res.statusCode} ${res.body}');
+  }
+
+  /// FAQ 수정 (관리자용)
+  static Future<void> updateFaq(int faqId, Faq faq) async {
+    final url = Uri.parse('${Baseurl.b}$manual/faqs/$faqId');
+
+    final res = await http
+        .put(
+          url,
+          headers: {'Content-Type': 'application/json; charset=utf-8'},
+          body: jsonEncode(faq.toJson()),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (res.statusCode != 200) {
+      throw Exception('FAQ 수정 실패: ${res.statusCode} ${res.body}');
+    }
+  }
+
+  /// FAQ 삭제 (관리자용)
+  static Future<void> deleteFaq(int faqId) async {
+    final url = Uri.parse('${Baseurl.b}$manual/faqs/$faqId');
+
+    final res = await http.delete(url).timeout(const Duration(seconds: 10));
+
+    if (res.statusCode != 200) {
+      throw Exception('FAQ 삭제 실패: ${res.statusCode} ${res.body}');
+    }
+  }
+
   // ========================================
   // 1:1 문의 API
   // ========================================

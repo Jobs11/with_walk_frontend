@@ -19,7 +19,7 @@ class _InquiryCreateScreenState extends State<InquiryCreateScreen> {
   String selectedCategory = '계정';
   bool isSubmitting = false;
 
-  final List<String> categories = ['계정', '결제', '이용방법', '오류/제안', '기타'];
+  final List<String> categories = ['계정', '결제', '이용방법', '오류 및 제안', '기타'];
 
   @override
   void initState() {

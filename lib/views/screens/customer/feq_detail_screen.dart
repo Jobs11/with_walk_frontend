@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/api/model/faq.dart';
+import 'package:with_walk/api/service/customer_service.dart';
 import 'package:with_walk/functions/data.dart';
+import 'package:with_walk/views/screens/admin/faq_edit_screen.dart';
 
 class FaqDetailScreen extends StatelessWidget {
   final Faq faq;
@@ -11,6 +13,7 @@ class FaqDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final current = ThemeManager().current;
+    final isAdmin = CurrentUser.instance.member?.mRole == 'ADMIN';
 
     return SafeArea(
       child: Scaffold(
@@ -154,6 +157,158 @@ class FaqDetailScreen extends StatelessWidget {
                   ],
                 ),
               ),
+
+              // 관리자 전용 - 수정/삭제 버튼
+              if (isAdmin) ...[
+                SizedBox(height: 16.h),
+                Container(
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: current.accent.withValues(alpha: 0.1),
+                    border: Border.all(
+                      color: current.accent.withValues(alpha: 0.3),
+                    ),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.admin_panel_settings,
+                            color: current.accent,
+                            size: 18.sp,
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            '관리자 메뉴',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                              color: current.accent,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 12.h),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        FaqEditScreen(faq: faq),
+                                  ),
+                                ).then((result) {
+                                  if (result == true) {
+                                    // 수정 완료 후 화면 새로고침 또는 뒤로가기
+                                    // ignore: use_build_context_synchronously
+                                    Navigator.pop(context, true);
+                                  }
+                                });
+                              },
+                              icon: Icon(Icons.edit, size: 18.sp),
+                              label: Text('수정'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: current.bg,
+                                foregroundColor: current.btn,
+                                side: BorderSide(color: current.btn),
+                                padding: EdgeInsets.symmetric(vertical: 12.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                // 삭제 확인 다이얼로그
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    backgroundColor: current.bg,
+                                    title: Text(
+                                      'FAQ 삭제',
+                                      style: TextStyle(
+                                        color: current.fontPrimary,
+                                      ),
+                                    ),
+                                    content: Text(
+                                      '이 FAQ를 삭제하시겠습니까?',
+                                      style: TextStyle(
+                                        color: current.fontSecondary,
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: Text(
+                                          '취소',
+                                          style: TextStyle(
+                                            color: current.fontThird,
+                                          ),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: Colors.red,
+                                        ),
+                                        child: Text('삭제'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+
+                                if (confirmed == true) {
+                                  try {
+                                    await CustomerService.deleteFaq(faq.faqId!);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(content: Text('FAQ가 삭제되었습니다')),
+                                      );
+                                      Navigator.pop(context, true); // 삭제 후 뒤로가기
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(content: Text('삭제 실패: $e')),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                              icon: Icon(Icons.delete_outline, size: 18.sp),
+                              label: Text('삭제'),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: current.bg,
+                                foregroundColor: Colors.red,
+                                side: BorderSide(color: Colors.red),
+                                padding: EdgeInsets.symmetric(vertical: 12.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),

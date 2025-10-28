@@ -329,7 +329,9 @@ class _UserProfileBottomSheetState extends State<UserProfileBottomSheet> {
                             _buildStatItem(
                               icon: Icons.straighten,
                               label: '총 거리',
-                              value: '${totalDistance.toStringAsFixed(1)} km',
+                              value: formatDistance(
+                                double.parse(totalDistance.toStringAsFixed(1)),
+                              ),
                               current: current,
                             ),
                           ],
@@ -527,7 +529,7 @@ class _UserProfileBottomSheetState extends State<UserProfileBottomSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildRecordStat('거리', '${record.rDistance} km'),
+              _buildRecordStat('거리', formatDistance(record.rDistance)),
               _buildRecordStat('시간', formatTime(int.parse(record.rTime))),
               _buildRecordStat('칼로리', '${record.rKcal} kcal'),
             ],

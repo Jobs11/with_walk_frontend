@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/api/model/faq.dart';
 import 'package:with_walk/api/service/customer_service.dart';
 import 'package:with_walk/functions/data.dart';
+import 'package:with_walk/views/screens/admin/faq_create_screen.dart';
 import 'package:with_walk/views/screens/customer/feq_detail_screen.dart';
 
 class FaqListScreen extends StatefulWidget {
@@ -18,7 +19,7 @@ class _FaqListScreenState extends State<FaqListScreen> {
   bool isLoading = true;
   String selectedCategory = '전체';
 
-  final List<String> categories = ['전체', '계정', '결제', '이용방법', '오류/제안', '기타'];
+  final List<String> categories = ['전체', '계정', '결제', '이용방법', '오류 및 제안', '기타'];
 
   @override
   void initState() {
@@ -56,6 +57,8 @@ class _FaqListScreenState extends State<FaqListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = CurrentUser.instance.member?.mRole == 'ADMIN';
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.grey[50],
@@ -74,6 +77,19 @@ class _FaqListScreenState extends State<FaqListScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
+          // 관리자 버튼 추가
+          actions: [
+            if (isAdmin)
+              IconButton(
+                icon: Icon(Icons.admin_panel_settings, color: current.accent),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => FaqCreateScreen()),
+                  );
+                },
+              ),
+          ],
         ),
         body: Column(
           children: [

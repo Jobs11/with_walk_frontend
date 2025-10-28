@@ -207,7 +207,7 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
 
                   // 총 거리 정보
                   Text(
-                    '총 ${totalDistance.toStringAsFixed(1)} km 걸었어요! 🚶',
+                    '총 ${formatDistance(double.parse(totalDistance.toStringAsFixed(1)))} 걸었어요! 🚶',
                     style: TextStyle(
                       fontSize: 16.sp,
                       color: current.fontThird,
