@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:with_walk/api/model/hashtag.dart';
 import 'package:with_walk/api/model/post.dart';
 import 'package:with_walk/api/model/post_comment.dart';
 import 'package:with_walk/api/model/street.dart';
+import 'package:with_walk/api/service/hashtag_service.dart';
 import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/api/service/post_comment_like_service.dart';
 import 'package:with_walk/api/service/post_comment_service.dart';
@@ -39,6 +41,8 @@ class _PostCardState extends State<PostCard> {
   List<PostComment> _previewComments = [];
   bool _isLoadingComments = false;
   Street? _streetRecord;
+  List<Hashtag> _hashtags = []; // ✅ 추가
+  bool _isLoadingHashtags = false; // ✅ 추가
 
   @override
   void initState() {
@@ -47,6 +51,8 @@ class _PostCardState extends State<PostCard> {
     if (widget.post.commentCount > 0) {
       _loadPreviewComments();
     }
+    // ✅ 해시태그 로드 추가
+    _loadHashtags();
   }
 
   // 운동 기록 로드
@@ -344,6 +350,28 @@ class _PostCardState extends State<PostCard> {
     }
   }
 
+  // 해시태그 로드
+  Future<void> _loadHashtags() async {
+    if (_isLoadingHashtags || widget.post.pNum == null) return;
+
+    setState(() => _isLoadingHashtags = true);
+
+    try {
+      final hashtags = await HashtagService.getPostHashtags(widget.post.pNum!);
+      if (mounted) {
+        setState(() {
+          _hashtags = hashtags;
+          _isLoadingHashtags = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('해시태그 로드 실패: $e');
+      if (mounted) {
+        setState(() => _isLoadingHashtags = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final current = ThemeManager().current;
@@ -420,6 +448,47 @@ class _PostCardState extends State<PostCard> {
 
           // 게시글 내용
           _buildContentWithTags(widget.post.pContent, current),
+
+          // ✅ 해시태그 표시 추가
+          if (_hashtags.isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Wrap(
+              spacing: 6.w,
+              runSpacing: 6.h,
+              children: _hashtags.map((hashtag) {
+                return GestureDetector(
+                  onTap: () {
+                    // TODO: 해시태그 클릭 시 해당 해시태그가 포함된 게시글 목록으로 이동
+                    debugPrint('해시태그 클릭: ${hashtag.hName}');
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 4.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: current.accent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: current.accent.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      '#${hashtag.hName}',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: current.hash,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+
+          SizedBox(height: 12.h),
 
           // 운동 기록 정보 (r_num이 있을 때)
           if (widget.post.rNum != null) ...[
@@ -743,13 +812,19 @@ class _PostCardState extends State<PostCard> {
     );
   }
 
-  // 게시글 내용에서 @닉네임 태그를 감지하고 스타일링
+  // 게시글 내용에서 @닉네임과 #해시태그 태그를 감지하고 스타일링
   Widget _buildContentWithTags(String content, ThemeColors current) {
     final currentUserNickname = CurrentUser.instance.member?.mNickname;
-    final regex = RegExp(r'@(\w+)');
-    final matches = regex.allMatches(content);
+    final mentionRegex = RegExp(r'@(\w+)');
+    final hashtagRegex = RegExp(r'#([가-힣a-zA-Z0-9_]+)'); // ✅ 추가
 
-    if (matches.isEmpty) {
+    // 모든 매치 수집 (멘션 + 해시태그)
+    List<RegExpMatch> allMatches = [
+      ...mentionRegex.allMatches(content),
+      ...hashtagRegex.allMatches(content),
+    ]..sort((a, b) => a.start.compareTo(b.start));
+
+    if (allMatches.isEmpty) {
       return Text(
         content,
         style: TextStyle(fontSize: 14.sp, color: current.fontThird),
@@ -759,7 +834,7 @@ class _PostCardState extends State<PostCard> {
     List<InlineSpan> spans = [];
     int lastIndex = 0;
 
-    for (final match in matches) {
+    for (final match in allMatches) {
       if (match.start > lastIndex) {
         spans.add(
           TextSpan(
@@ -769,27 +844,55 @@ class _PostCardState extends State<PostCard> {
         );
       }
 
-      final taggedNickname = match.group(1)!;
-      final isCurrentUser = taggedNickname == currentUserNickname;
+      final matchText = match.group(0)!;
 
-      spans.add(
-        WidgetSpan(
-          child: GestureDetector(
-            onTap: () => _showTaggedUserProfile(context, taggedNickname),
-            child: Text(
-              '@$taggedNickname',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: isCurrentUser ? Colors.red : current.accent,
-                fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.w600,
-                backgroundColor: isCurrentUser
-                    ? Colors.red.withValues(alpha: 0.1)
-                    : null,
+      // 멘션 처리
+      if (matchText.startsWith('@')) {
+        final taggedNickname = match.group(1)!;
+        final isCurrentUser = taggedNickname == currentUserNickname;
+
+        spans.add(
+          WidgetSpan(
+            child: GestureDetector(
+              onTap: () => _showTaggedUserProfile(context, taggedNickname),
+              child: Text(
+                '@$taggedNickname',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: isCurrentUser ? Colors.red : current.accent,
+                  fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.w600,
+                  backgroundColor: isCurrentUser
+                      ? Colors.red.withValues(alpha: 0.1)
+                      : null,
+                ),
               ),
             ),
           ),
-        ),
-      );
+        );
+      }
+      // ✅ 해시태그 처리 추가
+      else if (matchText.startsWith('#')) {
+        final hashtagName = match.group(1)!;
+
+        spans.add(
+          WidgetSpan(
+            child: GestureDetector(
+              onTap: () {
+                // TODO: 해시태그 클릭 시 처리
+                debugPrint('해시태그 클릭: $hashtagName');
+              },
+              child: Text(
+                '#$hashtagName',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: current.hash,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        );
+      }
 
       lastIndex = match.end;
     }

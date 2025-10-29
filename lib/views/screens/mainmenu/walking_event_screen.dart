@@ -11,6 +11,7 @@ import 'package:with_walk/functions/state_fn.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 import 'package:with_walk/views/screens/admin/create_challenge_screen.dart';
 import 'package:with_walk/views/screens/admin/edit_challenge_screen.dart';
+import 'package:with_walk/views/screens/friend_invite_screen.dart';
 import 'package:with_walk/views/widgets/user_profile_bottom_sheet.dart';
 
 class WalkingEventScreen extends StatefulWidget {
@@ -127,6 +128,7 @@ class _WalkingEventScreenState extends State<WalkingEventScreen>
                     color: current.accent,
                     borderRadius: BorderRadius.circular(10.r),
                   ),
+                  indicatorSize: TabBarIndicatorSize.tab, // 👈 이거 추가!
                   labelColor: current.bg,
                   unselectedLabelColor: current.fontPrimary,
                   labelStyle: TextStyle(
@@ -879,10 +881,96 @@ class _WalkingEventScreenState extends State<WalkingEventScreen>
                   ),
                 );
               }),
+
+              // 👇 친구 초대 배너 추가
+              SizedBox(height: 8.h),
+              _buildInviteBanner(),
             ],
           ),
         );
       },
+    );
+  }
+
+  // 👇 친구 초대 배너 위젯
+  Widget _buildInviteBanner() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const FriendInviteScreen()),
+        );
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              current.accent.withValues(alpha: 0.8),
+              current.accent.withValues(alpha: 0.6),
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: current.accent.withValues(alpha: 0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // 아이콘
+            Container(
+              width: 44.w,
+              height: 44.w,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Icon(
+                Icons.person_add_rounded,
+                color: Colors.white,
+                size: 24.sp,
+              ),
+            ),
+            SizedBox(width: 16.w),
+            // 텍스트
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '친구 초대하고 함께 도전하기!',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    '초대하면 서로 보너스 포인트 지급',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // 화살표
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.white,
+              size: 18.sp,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

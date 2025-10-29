@@ -8,7 +8,7 @@ import 'package:with_walk/api/model/member_profile.dart';
 import 'package:with_walk/api/service/cloudinary_upload_service.dart';
 import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/functions/data.dart';
-import 'package:with_walk/views/screens/login_screen.dart';
+import 'package:with_walk/views/screens/enter_invite_code_screen.dart';
 
 // ✅ userId 파라미터 추가
 Future<String?> profileChange(
@@ -125,7 +125,7 @@ class __ProfileChangeDialogState extends State<_ProfileChangeDialog> {
         (widget.title == '회원가입')
             ? Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => LoginScreen()),
+                MaterialPageRoute(builder: (_) => EnterInviteCodeScreen()),
               )
             : Navigator.pop(context); // null 반환 (기본 이미지 사용)
       } else {
@@ -278,7 +278,7 @@ class __ProfileChangeDialogState extends State<_ProfileChangeDialog> {
       onPressed: () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => LoginScreen()),
+          MaterialPageRoute(builder: (_) => EnterInviteCodeScreen()),
         );
       },
       style: TextButton.styleFrom(
@@ -367,7 +367,7 @@ class __ProfileChangeDialogState extends State<_ProfileChangeDialog> {
         (widget.title == '회원가입')
             ? Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => LoginScreen()),
+                MaterialPageRoute(builder: (_) => EnterInviteCodeScreen()),
               )
             : Navigator.pop(context); // null 반환 (기본 이미지 사용)
       },

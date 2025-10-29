@@ -8,6 +8,7 @@ import 'package:with_walk/api/model/member_nickname.dart';
 import 'package:with_walk/api/model/post.dart';
 import 'package:with_walk/api/model/street.dart';
 import 'package:with_walk/api/service/cloudinary_upload_service.dart';
+import 'package:with_walk/api/service/hashtag_service.dart'; // ✅ 추가
 import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/api/service/post_service.dart';
 import 'package:with_walk/functions/state_fn.dart';
@@ -38,7 +39,7 @@ class _CreatePostBottomSheetState extends State<CreatePostBottomSheet> {
   bool _isLoading = false;
   final _cloudinaryService = CloudinaryUploadService();
 
-  // 태그 관련 추가
+  // 태그 관련
   List<MemberNickname> _searchResults = [];
   final List<String> _taggedNicknames = [];
   bool _showTagSuggestions = false;
@@ -143,7 +144,23 @@ class _CreatePostBottomSheetState extends State<CreatePostBottomSheet> {
       debugPrint("json ${jsonEncode(post.toJson())}");
       debugPrint("태그된 사용자: $_taggedNicknames");
 
+      // ✅ 게시글 작성
       await PostService.createPostWithImage(post: post, imageFile: null);
+
+      // ✅ 해시태그 추출 및 추가
+      final hashtags = HashtagService.extractHashtagsFromText(
+        _contentController.text.trim(),
+      );
+
+      if (hashtags.isNotEmpty && post.pNum != null) {
+        debugPrint("추출된 해시태그: $hashtags");
+        try {
+          await HashtagService.addHashtagsToPost(post.pNum!, hashtags);
+          debugPrint("해시태그 추가 완료");
+        } catch (e) {
+          debugPrint("해시태그 추가 실패: $e");
+        }
+      }
 
       if (!mounted) return;
 
@@ -208,16 +225,23 @@ class _CreatePostBottomSheetState extends State<CreatePostBottomSheet> {
                   onPressed: _isLoading ? null : _submitPost,
                   child: _isLoading
                       ? SizedBox(
-                          width: 20.w,
-                          height: 20.h,
+                          width: 16.w,
+                          height: 16.h,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text('완료', style: TextStyle(color: current.accent)),
+                      : Text(
+                          '등록',
+                          style: TextStyle(
+                            color: current.accent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ],
             ),
           ),
 
+          // 본문
           Expanded(
             child: Stack(
               children: [
@@ -226,47 +250,39 @@ class _CreatePostBottomSheetState extends State<CreatePostBottomSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 텍스트 입력
+                      // 글 작성
                       TextField(
                         controller: _contentController,
-                        maxLines: 5,
+                        maxLines: 6,
+                        maxLength: 500,
+                        style: TextStyle(fontSize: 15.sp),
                         decoration: InputDecoration(
-                          hintText: '오늘의 걷기 기록을 공유해보세요...\n@ 를 입력해 친구를 태그하세요',
+                          hintText:
+                              '무슨 생각을 하고 계신가요?\n\n@ 를 입력하면 친구를 태그할 수 있어요\n# 를 입력하면 해시태그를 추가할 수 있어요', // ✅ 안내 추가
+                          hintStyle: TextStyle(color: Colors.grey[400]),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12.r),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                            borderSide: BorderSide(
+                              color: current.accent,
+                              width: 2,
+                            ),
                           ),
                         ),
                       ),
-
-                      // 태그된 사용자 표시
-                      if (_taggedNicknames.isNotEmpty) ...[
-                        SizedBox(height: 12.h),
-                        Wrap(
-                          spacing: 8.w,
-                          runSpacing: 8.h,
-                          children: _taggedNicknames.map((nickname) {
-                            return Chip(
-                              label: Text(
-                                '@$nickname',
-                                style: TextStyle(fontSize: 12.sp),
-                              ),
-                              deleteIcon: Icon(Icons.close, size: 16.sp),
-                              visualDensity: VisualDensity.compact,
-                              onDeleted: () {
-                                setState(() {
-                                  _taggedNicknames.remove(nickname);
-                                });
-                              },
-                            );
-                          }).toList(),
-                        ),
-                      ],
 
                       SizedBox(height: 16.h),
 
                       // 운동 기록 선택
                       Text(
-                        '운동 기록 선택 (선택사항)',
+                        '운동 기록 연결 (선택사항)',
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.bold,
@@ -276,12 +292,7 @@ class _CreatePostBottomSheetState extends State<CreatePostBottomSheet> {
                       SizedBox(height: 8.h),
 
                       if (widget.records.isEmpty)
-                        Container(
-                          padding: EdgeInsets.all(16.w),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
+                        Center(
                           child: Text(
                             '저장된 운동 기록이 없습니다',
                             style: TextStyle(color: Colors.grey),

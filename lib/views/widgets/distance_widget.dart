@@ -9,7 +9,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:with_walk/api/model/place_result.dart';
 import 'package:with_walk/api/service/naver_local_service.dart';
 import 'package:with_walk/functions/data.dart';
-import 'package:with_walk/functions/widegt_fn.dart';
 
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
 
@@ -33,7 +32,6 @@ class _DistanceWidgetState extends State<DistanceWidget> {
   final startController = TextEditingController();
   final arriveController = TextEditingController();
 
-  // ✅ Completer를 late가 아닌 initState에서 생성
   late Completer<NaverMapController> _mapReady;
   // ignore: unused_field
   bool _isMapReady = false;
@@ -49,6 +47,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
   double? _distanceM;
 
   bool _isLoadingLocation = false;
+  bool _isPanelExpanded = true; // 👈 패널 펼침/접기 상태
 
   late final NaverLocalService _naver = NaverLocalService(
     searchClientId: NaverApi.naversearchclientid,
@@ -60,8 +59,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
   @override
   void initState() {
     super.initState();
-
-    _mapReady = Completer<NaverMapController>(); // ✅ 여기서 생성
+    _mapReady = Completer<NaverMapController>();
   }
 
   @override
@@ -72,8 +70,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
   }
 
   Future<void> _flyTo(NLatLng target, {double zoom = 16}) async {
-    if (!mounted) return; // ✅ mounted 체크
-
+    if (!mounted) return;
     try {
       final c = _controller ?? await _mapReady.future;
       await c.updateCamera(
@@ -92,8 +89,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
   }
 
   Future<void> _setStart(NLatLng p) async {
-    if (!mounted) return; // ✅ mounted 체크
-
+    if (!mounted) return;
     debugPrint('🟢 setStart: ${p.latitude}, ${p.longitude}');
     _start = p;
     final c = await _c();
@@ -111,8 +107,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
   }
 
   Future<void> _setGoal(NLatLng p) async {
-    if (!mounted) return; // ✅ mounted 체크
-
+    if (!mounted) return;
     debugPrint('🔴 setGoal: ${p.latitude}, ${p.longitude}');
     _goal = p;
     final c = await _c();
@@ -130,8 +125,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
   }
 
   Future<void> _makeRoadRoute() async {
-    if (!mounted) return; // ✅ mounted 체크
-
+    if (!mounted) return;
     debugPrint('▶️ makeRoadRoute start: _start=$_start, _goal=$_goal');
 
     final c = await _c();
@@ -148,9 +142,14 @@ class _DistanceWidgetState extends State<DistanceWidget> {
       _line = null;
     }
 
-    final route = await _naver.fetchShortestRoute(start: _start!, goal: _goal!);
+    // 👇 여기에 isWalking: true 추가!
+    final route = await _naver.fetchShortestRoute(
+      start: _start!,
+      goal: _goal!,
+      isWalking: true, // 👈 도보 경로 사용!
+    );
 
-    if (!mounted) return; // ✅ 비동기 작업 후 mounted 체크
+    if (!mounted) return;
 
     if (route == null) {
       _distanceM = null;
@@ -165,7 +164,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
       id: 'sg-road-line',
       coords: route.path,
       width: 6,
-      color: Colors.blueAccent,
+      color: Colors.green, // 👈 도보는 녹색으로 표시!
     );
     if (c != null) await c.addOverlay(_line!);
 
@@ -177,7 +176,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
   }
 
   Future<void> _resetMarks() async {
-    if (!mounted) return; // ✅ mounted 체크
+    if (!mounted) return;
 
     if (_start == null && _goal == null && _distanceM == null) {
       ScaffoldMessenger.of(
@@ -220,7 +219,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
   }
 
   Future<void> _getCurrentLocation() async {
-    if (!mounted) return; // ✅ mounted 체크
+    if (!mounted) return;
 
     setState(() => _isLoadingLocation = true);
 
@@ -266,7 +265,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      if (!mounted) return; // ✅ 비동기 작업 후 mounted 체크
+      if (!mounted) return;
 
       final currentLatLng = NLatLng(position.latitude, position.longitude);
 
@@ -274,7 +273,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
 
       final addr = await _naver.reverseGeocodeToAddress(currentLatLng);
 
-      if (!mounted) return; // ✅ 비동기 작업 후 mounted 체크
+      if (!mounted) return;
 
       if (addr != null && mounted) {
         setState(() => startController.text = addr);
@@ -303,6 +302,14 @@ class _DistanceWidgetState extends State<DistanceWidget> {
       ? '${(m / 1000).toStringAsFixed(2)} km'
       : '${m.toStringAsFixed(0)} m';
 
+  // 👉 예상 소요 시간 계산 (평균 보행 속도 4km/h 기준)
+  String _estimateTime(double meters) {
+    final hours = meters / 4000; // 4km/h
+    final minutes = (hours * 60).round();
+    if (minutes < 1) return '1분 미만';
+    return '$minutes분';
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -321,189 +328,330 @@ class _DistanceWidgetState extends State<DistanceWidget> {
         ),
         body: Stack(
           children: [
+            // 배경
             Positioned.fill(
               child: Image.asset(
                 "assets/images/bgs/background.png",
                 fit: BoxFit.cover,
               ),
             ),
-            Center(
-              child: SizedBox(
-                width: double.infinity,
-                height: 580.h,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      SizedBox(height: 20.h),
-                      SizedBox(
-                        width: 300.w,
-                        height: 300.h,
-                        child: NaverMap(
-                          options: NaverMapViewOptions(
-                            initialCameraPosition: NCameraPosition(
-                              target: _seoul,
-                              zoom: 14,
-                            ),
-                            contentPadding: EdgeInsets.zero,
-                            mapType: NMapType.basic,
-                            liteModeEnable: false,
-                            indoorEnable: false,
-                            logoClickEnable: false,
-                            rotationGesturesEnable: true,
-                            scrollGesturesEnable: true,
-                            tiltGesturesEnable: true,
-                            zoomGesturesEnable: true,
-                          ),
-                          onMapReady: (c) {
-                            if (!mounted) return; // ✅ mounted 체크
 
-                            _controller = c;
-                            if (!_mapReady.isCompleted) _mapReady.complete(c);
-                            _isMapReady = true;
-                            debugPrint('✅ NaverMap ready');
-                          },
-                          onMapTapped: (pt, latLng) async {
-                            if (!mounted) return; // ✅ mounted 체크
-
-                            final focus = FocusScope.of(context);
-                            if (focus.hasPrimaryFocus) focus.unfocus();
-
-                            if (_start == null) {
-                              await _setStart(latLng);
-                              final addr = await _naver.reverseGeocodeToAddress(
-                                latLng,
-                              );
-                              if (addr != null && mounted) {
-                                setState(() => startController.text = addr);
-                              }
-                              await _flyTo(latLng);
-                            } else if (_goal == null) {
-                              await _setGoal(latLng);
-                              final addr = await _naver.reverseGeocodeToAddress(
-                                latLng,
-                              );
-                              if (addr != null && mounted) {
-                                setState(() => arriveController.text = addr);
-                              }
-                              await _flyTo(latLng);
-                            } else {
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('리셋 후 다시 지정하세요.'),
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                        ),
+            // 메인 컨텐츠
+            Column(
+              children: [
+                // 🗺️ 지도 영역 (더 크게)
+                SizedBox(
+                  width: double.infinity,
+                  height: _isPanelExpanded ? 400.h : 500.h,
+                  child: NaverMap(
+                    options: NaverMapViewOptions(
+                      initialCameraPosition: NCameraPosition(
+                        target: _seoul,
+                        zoom: 14,
                       ),
-                      SizedBox(height: 10.h),
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.symmetric(horizontal: 30.w),
-                        child: Column(
-                          children: [
-                            _inputRow(
-                              '출발',
-                              startController,
-                              showLocationBtn: true,
-                            ),
-                            SizedBox(height: 8.h),
-                            _inputRow('도착', arriveController),
-                            SizedBox(height: 8.h),
+                      contentPadding: EdgeInsets.zero,
+                      mapType: NMapType.basic,
+                      liteModeEnable: false,
+                      indoorEnable: false,
+                      logoClickEnable: false,
+                      rotationGesturesEnable: true,
+                      scrollGesturesEnable: true,
+                      tiltGesturesEnable: true,
+                      zoomGesturesEnable: true,
+                    ),
+                    onMapReady: (c) {
+                      if (!mounted) return;
+                      _controller = c;
+                      if (!_mapReady.isCompleted) _mapReady.complete(c);
+                      _isMapReady = true;
+                      debugPrint('✅ NaverMap ready');
+                    },
+                    onMapTapped: (pt, latLng) async {
+                      if (!mounted) return;
 
-                            if (_distanceM != null)
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12.w,
-                                  vertical: 10.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: current.bg,
-                                  border: Border.all(color: current.accent),
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.route),
-                                    SizedBox(width: 8.w),
-                                    Text(
-                                      '경로 거리: ${_fmtMeters(_distanceM!)}',
-                                      style: TextStyle(
-                                        color: current.fontThird,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14.sp,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                      final focus = FocusScope.of(context);
+                      if (focus.hasPrimaryFocus) focus.unfocus();
 
-                            SizedBox(height: 8.h),
-                            colorbtn(
-                              '길찾기',
-                              current.bg,
-                              current.fontThird,
-                              current.accent,
-                              double.infinity,
-                              36,
-                              () {
-                                _makeRoadRoute();
-                              },
-                            ),
-
-                            // ✅ 걷기 시작 버튼 추가
-                            SizedBox(height: 8.h),
-                            colorbtn(
-                              '걷기 시작',
-                              current.accent,
-                              current.bg,
-                              current.accent,
-                              double.infinity,
-                              36,
-                              () {
-                                if (_goal == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('도착지를 설정해주세요.'),
-                                    ),
-                                  );
-                                } else {
-                                  if (widget.onStartWalk != null) {
-                                    // ✅ 출발지/도착지 정보와 주소를 함께 전달
-                                    widget.onStartWalk!(
-                                      start: _start,
-                                      goal: _goal,
-                                      startAddr: startController.text,
-                                      goalAddr: arriveController.text,
-                                    );
-                                  }
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      if (_start == null) {
+                        await _setStart(latLng);
+                        final addr = await _naver.reverseGeocodeToAddress(
+                          latLng,
+                        );
+                        if (addr != null && mounted) {
+                          setState(() => startController.text = addr);
+                        }
+                        await _flyTo(latLng);
+                      } else if (_goal == null) {
+                        await _setGoal(latLng);
+                        final addr = await _naver.reverseGeocodeToAddress(
+                          latLng,
+                        );
+                        if (addr != null && mounted) {
+                          setState(() => arriveController.text = addr);
+                        }
+                        await _flyTo(latLng);
+                      } else {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('리셋 후 다시 지정하세요.')),
+                          );
+                        }
+                      }
+                    },
                   ),
                 ),
-              ),
-            ),
-          ],
-        ),
-        floatingActionButton: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FloatingActionButton.extended(
-              heroTag: 'reset',
-              onPressed: _resetMarks,
-              label: Text(
-                '리셋',
-                style: TextStyle(color: current.bg, fontSize: 16.sp),
-              ),
-              icon: Icon(Icons.refresh, color: current.bg),
-              backgroundColor: current.accent,
+
+                // 🎴 컨트롤 패널 (카드 스타일)
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: current.bg,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(24.r),
+                        topRight: Radius.circular(24.r),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 12,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          // 패널 헤더 (접기/펴기)
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isPanelExpanded = !_isPanelExpanded;
+                              });
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: 12.h),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    width: 40.w,
+                                    height: 4.h,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(2.r),
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        _isPanelExpanded
+                                            ? Icons.keyboard_arrow_down
+                                            : Icons.keyboard_arrow_up,
+                                        color: current.fontSecondary,
+                                      ),
+                                      SizedBox(width: 8.w),
+                                      Text(
+                                        _isPanelExpanded ? '경로 설정' : '경로 보기',
+                                        style: TextStyle(
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.bold,
+                                          color: current.fontThird,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // 패널 내용
+                          if (_isPanelExpanded)
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 20.w),
+                              child: Column(
+                                children: [
+                                  // 출발지 카드
+                                  _buildLocationCard(
+                                    icon: Icons.my_location,
+                                    iconColor: Colors.green,
+                                    title: '출발지',
+                                    controller: startController,
+                                    hint: '출발',
+                                    showLocationBtn: true,
+                                  ),
+
+                                  SizedBox(height: 12.h),
+
+                                  // 도착지 카드
+                                  _buildLocationCard(
+                                    icon: Icons.location_on,
+                                    iconColor: Colors.red,
+                                    title: '도착지',
+                                    controller: arriveController,
+                                    hint: '도착',
+                                    showLocationBtn: false,
+                                  ),
+
+                                  SizedBox(height: 16.h),
+
+                                  // 경로 정보 카드
+                                  if (_distanceM != null)
+                                    Container(
+                                      padding: EdgeInsets.all(16.w),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            current.accent.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            current.accent.withValues(
+                                              alpha: 0.05,
+                                            ),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          16.r,
+                                        ),
+                                        border: Border.all(
+                                          color: current.accent.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceAround,
+                                        children: [
+                                          _buildInfoColumn(
+                                            icon: Icons.straighten,
+                                            label: '예상 거리',
+                                            value: _fmtMeters(_distanceM!),
+                                          ),
+                                          Container(
+                                            width: 1,
+                                            height: 40.h,
+                                            color: current.accent.withValues(
+                                              alpha: 0.2,
+                                            ),
+                                          ),
+                                          _buildInfoColumn(
+                                            icon: Icons.access_time,
+                                            label: '예상 시간',
+                                            value: _estimateTime(_distanceM!),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                  SizedBox(height: 20.h),
+
+                                  // 버튼들
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          onPressed: _resetMarks,
+                                          icon: const Icon(Icons.refresh),
+                                          label: const Text('초기화'),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: current.accent,
+                                            side: BorderSide(
+                                              color: current.accent,
+                                            ),
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 14.h,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 12.w),
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          onPressed: _distanceM == null
+                                              ? _makeRoadRoute
+                                              : null,
+                                          icon: const Icon(Icons.route),
+                                          label: const Text('경로 보기'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: current.accent,
+                                            foregroundColor: Colors.white,
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 14.h,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  SizedBox(height: 12.h),
+
+                                  // 걷기 시작 버튼
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      onPressed: _goal == null
+                                          ? null
+                                          : () {
+                                              if (widget.onStartWalk != null) {
+                                                widget.onStartWalk!(
+                                                  start: _start,
+                                                  goal: _goal,
+                                                  startAddr:
+                                                      startController.text,
+                                                  goalAddr:
+                                                      arriveController.text,
+                                                );
+                                              }
+                                            },
+                                      icon: const Icon(
+                                        Icons.directions_walk,
+                                        size: 24,
+                                      ),
+                                      label: Text(
+                                        '걷기 시작하기',
+                                        style: TextStyle(
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        foregroundColor: Colors.white,
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 16.h,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12.r,
+                                          ),
+                                        ),
+                                        disabledBackgroundColor: Colors.grey
+                                            .withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                  ),
+
+                                  SizedBox(height: 20.h),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -511,48 +659,130 @@ class _DistanceWidgetState extends State<DistanceWidget> {
     );
   }
 
-  Row _inputRow(
-    String title,
-    TextEditingController controller, {
-    bool showLocationBtn = false,
+  // 위치 카드 위젯
+  Widget _buildLocationCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required TextEditingController controller,
+    required String hint,
+    required bool showLocationBtn,
   }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16.sp,
-            color: current.fontThird,
-            fontWeight: FontWeight.bold,
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: current.fontSecondary.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-        ),
-        Row(
-          children: [
-            if (showLocationBtn)
-              GestureDetector(
-                onTap: _isLoadingLocation ? null : _getCurrentLocation,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-                  margin: EdgeInsets.only(right: 6.w),
-                  decoration: BoxDecoration(
-                    color: current.accent,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: _isLoadingLocation
-                      ? SizedBox(
-                          width: 16.w,
-                          height: 16.h,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: current.bg,
-                          ),
-                        )
-                      : Icon(Icons.my_location, color: current.bg, size: 18.sp),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36.w,
+                height: 36.w,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Icon(icon, color: iconColor, size: 20.sp),
+              ),
+              SizedBox(width: 12.w),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  color: current.fontThird,
                 ),
               ),
-            _addressInputField(title, controller),
-          ],
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              if (showLocationBtn)
+                GestureDetector(
+                  onTap: _isLoadingLocation ? null : _getCurrentLocation,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 8.h,
+                    ),
+                    margin: EdgeInsets.only(right: 8.w),
+                    decoration: BoxDecoration(
+                      color: current.accent,
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: _isLoadingLocation
+                        ? SizedBox(
+                            width: 16.w,
+                            height: 16.h,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.my_location,
+                                color: Colors.white,
+                                size: 16.sp,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                '현재위치',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              Expanded(child: _addressInputField(hint, controller)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 정보 컬럼 위젯
+  Widget _buildInfoColumn({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Column(
+      children: [
+        Icon(icon, color: current.accent, size: 24.sp),
+        SizedBox(height: 8.h),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12.sp, color: current.fontSecondary),
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+            color: current.fontThird,
+          ),
         ),
       ],
     );
@@ -561,30 +791,25 @@ class _DistanceWidgetState extends State<DistanceWidget> {
   /// ✅ 주소 직접 입력 + 장소 검색 통합 필드
   Widget _addressInputField(String hint, TextEditingController ctrl) {
     return Container(
-      width: 200.w,
-      height: 36.h,
-      padding: EdgeInsets.symmetric(horizontal: 6.w),
+      height: 44.h,
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
-        color: current.bg,
-        border: Border.all(color: current.accent),
-        borderRadius: BorderRadius.circular(12.r),
+        color: current.bg.withValues(alpha: 0.5),
+        border: Border.all(color: current.fontSecondary.withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(10.r),
       ),
       child: TypeAheadField<dynamic>(
         hideOnEmpty: true,
         hideOnLoading: true,
-        hideOnUnfocus: false, // ✅ 엔터키 입력을 위해 false
+        hideOnUnfocus: true,
         hideOnSelect: true,
         debounceDuration: const Duration(milliseconds: 400),
-
         suggestionsCallback: (q) async {
           final query = q.trim();
           if (query.isEmpty || query.length < 2) return [];
-
-          // ✅ 장소명 검색만 자동완성으로 제공
           final places = await _naver.searchPlaces(query);
           return places;
         },
-
         builder: (context, tController, focusNode) {
           if (tController.text != ctrl.text) {
             tController.value = ctrl.value;
@@ -594,15 +819,12 @@ class _DistanceWidgetState extends State<DistanceWidget> {
             focusNode: focusNode,
             onChanged: (_) => ctrl.value = tController.value,
             textInputAction: TextInputAction.search,
-
-            // ✅ 엔터키 또는 검색 버튼 누르면 주소로 직접 검색
             onSubmitted: (value) async {
               final address = value.trim();
               if (address.isEmpty) return;
 
               FocusScope.of(context).unfocus();
 
-              // ✅ 주소 → 좌표 변환
               final latLng = await _naver.geocodeToLatLng(address);
 
               if (!mounted) return;
@@ -610,12 +832,11 @@ class _DistanceWidgetState extends State<DistanceWidget> {
               if (latLng == null) {
                 // ignore: use_build_context_synchronously
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('해당 주소를 찾을 수 없습니다. 다시 입력해주세요.')),
+                  const SnackBar(content: Text('해당 주소를 찾을 수 없습니다.')),
                 );
                 return;
               }
 
-              // ✅ 마커 표시
               final isStart = hint.trim() == '출발';
               if (isStart) {
                 await _setStart(latLng);
@@ -634,7 +855,6 @@ class _DistanceWidgetState extends State<DistanceWidget> {
                 );
               }
             },
-
             onTap: () {
               if (tController.selection.start == tController.selection.end) {
                 tController.selection = TextSelection.fromPosition(
@@ -642,15 +862,13 @@ class _DistanceWidgetState extends State<DistanceWidget> {
                 );
               }
             },
-
             decoration: InputDecoration(
               counterText: '',
               border: InputBorder.none,
-              hintText: hint,
+              hintText: '주소 또는 장소명 입력',
               suffixIcon: IconButton(
-                icon: Icon(Icons.search, size: 18.sp, color: current.accent),
+                icon: Icon(Icons.search, size: 20.sp, color: current.accent),
                 onPressed: () async {
-                  // ✅ 검색 버튼 클릭 시에도 주소로 검색
                   final address = tController.text.trim();
                   if (address.isEmpty) return;
 
@@ -681,16 +899,13 @@ class _DistanceWidgetState extends State<DistanceWidget> {
                 },
               ),
               hintStyle: TextStyle(
-                color: current.fontPrimary,
-                fontWeight: FontWeight.bold,
+                color: current.fontSecondary.withValues(alpha: 0.6),
                 fontSize: 13.sp,
               ),
             ),
             style: TextStyle(fontSize: 14.sp),
           );
         },
-
-        // ✅ 장소명 자동완성 결과 표시
         itemBuilder: (context, item) {
           if (item is! PlaceResult) return const SizedBox.shrink();
 
@@ -711,8 +926,6 @@ class _DistanceWidgetState extends State<DistanceWidget> {
             ),
           );
         },
-
-        // ✅ 장소명 선택 시
         onSelected: (item) async {
           if (item is! PlaceResult) return;
 
@@ -729,11 +942,9 @@ class _DistanceWidgetState extends State<DistanceWidget> {
           if (latLng == null) {
             debugPrint('❌ geocode null for "$addr"');
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('주소 좌표를 찾지 못했습니다. 다른 키워드로 검색해보세요.'),
-                ),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('주소 좌표를 찾지 못했습니다.')));
             }
             return;
           }

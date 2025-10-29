@@ -14,6 +14,7 @@ abstract class ThemeColors {
   Color get pathStart;
   Color get pathEnd;
   Color get app;
+  Color get hash;
 }
 
 // 라이트 테마
@@ -42,6 +43,8 @@ class AppColors implements ThemeColors {
   Color get pathEnd => const Color(0xFF2196F3);
   @override
   Color get app => const Color(0xFFeefaef);
+  @override
+  Color get hash => const Color(0xFF3C8C5A);
 }
 
 // 다크 테마 (개선됨)
@@ -70,6 +73,8 @@ class AppColorsDark implements ThemeColors {
   Color get pathEnd => const Color(0xFF42A5F5); // 끝: 밝은 블루
   @override
   Color get app => const Color(0xFF1A1A1A); // 앱 전체 틀
+  @override
+  Color get hash => const Color(0xFFA5D6A7);
 }
 
 // 다크 소프트 테마 (3번째 테마 - 눈의 피로 최소화)
@@ -98,6 +103,8 @@ class AppColorsDarkSoft implements ThemeColors {
   Color get pathEnd => const Color(0xFF64B5F6);
   @override
   Color get app => const Color(0xFF242424);
+  @override
+  Color get hash => const Color(0xFFA5D6A7);
 }
 
 // Map으로 관리 (3가지 테마)

@@ -11,6 +11,7 @@ import 'package:with_walk/views/screens/customer/faq_list_screen.dart';
 import 'package:with_walk/views/screens/customer/inquiry_create_screen.dart';
 import 'package:with_walk/views/screens/customer/notice_list_screen.dart';
 import 'package:with_walk/views/screens/customer_center_screen.dart';
+import 'package:with_walk/views/screens/friend_invite_screen.dart';
 import 'package:with_walk/views/screens/login_screen.dart';
 import 'package:with_walk/views/screens/membership_update_screen.dart';
 import 'package:with_walk/views/widgets/follower_dialog.dart';
@@ -214,6 +215,10 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+
+                  SizedBox(height: 16.h),
+
+                  _buildInviteBanner(),
 
                   SizedBox(height: 16.h),
 
@@ -527,6 +532,88 @@ class _WalkingProfileScreenState extends State<WalkingProfileScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInviteBanner() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const FriendInviteScreen()),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 40.w),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              current.accent.withValues(alpha: 0.8),
+              current.accent.withValues(alpha: 0.6),
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: current.accent.withValues(alpha: 0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // 아이콘
+            Container(
+              width: 44.w,
+              height: 44.w,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Icon(
+                Icons.person_add_rounded,
+                color: Colors.white,
+                size: 24.sp,
+              ),
+            ),
+            SizedBox(width: 14.w),
+            // 텍스트
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '친구 초대하고 함께 걸어요!',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    '초대하면 보너스 포인트 지급',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // 화살표
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.white,
+              size: 16.sp,
+            ),
+          ],
         ),
       ),
     );

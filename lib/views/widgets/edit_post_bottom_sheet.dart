@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:with_walk/api/model/post.dart';
 import 'package:with_walk/api/service/cloudinary_upload_service.dart';
+import 'package:with_walk/api/service/hashtag_service.dart'; // ✅ 추가
 import 'package:with_walk/api/service/post_service.dart';
 import 'package:with_walk/api/service/member_service.dart';
 import 'package:with_walk/api/model/member_nickname.dart';
@@ -151,7 +152,25 @@ class _EditPostBottomSheetState extends State<EditPostBottomSheet> {
       debugPrint("수정 json: ${jsonEncode(updatedPost.toJson())}");
       debugPrint("태그된 사용자: $_taggedNicknames");
 
+      // ✅ 게시글 수정
       await PostService.updatePost(updatedPost);
+
+      // ✅ 해시태그 업데이트
+      final hashtags = HashtagService.extractHashtagsFromText(
+        _contentController.text.trim(),
+      );
+
+      if (widget.post.pNum != null) {
+        debugPrint("추출된 해시태그: $hashtags");
+        try {
+          // 기존 해시태그 삭제 후 새로 추가
+          await HashtagService.updatePostHashtags(widget.post.pNum!, hashtags);
+          debugPrint("해시태그 업데이트 완료");
+        } catch (e) {
+          debugPrint("해시태그 업데이트 실패: $e");
+          // 해시태그 업데이트 실패해도 게시글은 수정됨
+        }
+      }
 
       if (!mounted) return;
 
@@ -239,7 +258,8 @@ class _EditPostBottomSheetState extends State<EditPostBottomSheet> {
                         controller: _contentController,
                         maxLines: 5,
                         decoration: InputDecoration(
-                          hintText: '내용을 입력하세요...\n@ 를 입력해 친구를 태그하세요',
+                          hintText:
+                              '내용을 입력하세요...\n@ 를 입력해 친구를 태그하세요\n# 를 입력해 해시태그를 추가하세요', // ✅ 수정
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),

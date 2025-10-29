@@ -154,14 +154,23 @@ class NaverLocalService {
   }
 
   /// ✅ NEW: 여러 옵션 중 가장 짧은 거리 경로 선택
+  /// [isWalking]이 true면 도보용(자동차 전용도로 회피), false면 자동차용
   Future<({List<NLatLng> path, int distanceM, String option})?>
-  fetchShortestRoute({required NLatLng start, required NLatLng goal}) async {
-    final options = ['trafast', 'traoptimal', 'tracomfort'];
+  fetchShortestRoute({
+    required NLatLng start,
+    required NLatLng goal,
+    bool isWalking = true, // 👈 기본값을 true(도보)로 설정
+  }) async {
+    // 🚶 도보용: 자동차 전용도로 회피
+    // 🚗 자동차용: 빠름/최적/편안 중 선택
+    final options = isWalking
+        ? ['traavoidcaronly']
+        : ['trafast', 'traoptimal', 'tracomfort'];
 
     ({List<NLatLng> path, int distanceM, String option})? shortest;
 
     for (final opt in options) {
-      debugPrint('🔍 경로 검색 중: $opt');
+      debugPrint('🔍 경로 검색 중: $opt ${isWalking ? "(도보)" : "(자동차)"}');
 
       final route = await fetchDrivingRoute(
         start: start,
@@ -183,7 +192,9 @@ class NaverLocalService {
     }
 
     if (shortest != null) {
-      debugPrint('✅ 최단 경로: ${shortest.option} (${shortest.distanceM}m)');
+      debugPrint(
+        '✅ 최단 경로: ${shortest.option} (${shortest.distanceM}m) ${isWalking ? "🚶" : "🚗"}',
+      );
     }
 
     return shortest;
