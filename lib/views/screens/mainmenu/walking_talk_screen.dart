@@ -5,6 +5,7 @@ import 'package:with_walk/api/service/post_service.dart';
 import 'package:with_walk/api/service/street_service.dart';
 import 'package:with_walk/functions/data.dart';
 import 'package:with_walk/views/bars/with_walk_appbar.dart';
+import 'package:with_walk/views/screens/recommended_users_screen.dart'; // 👈 추가
 import 'package:with_walk/views/widgets/create_post_bottom_sheet.dart';
 import 'package:with_walk/views/widgets/post_card.dart';
 
@@ -18,36 +19,38 @@ class WalkingTalkScreen extends StatefulWidget {
 class _WalkingTalkScreenState extends State<WalkingTalkScreen> {
   final current = ThemeManager().current;
   late Future<List<Post>> _postsFuture;
-  int _selectedTabIndex = 0; // 0: 전체, 1: 인기, 2: 친구
+  int _selectedTabIndex = 0; // 0: 전체, 1: 인기, 2: 친구, 3: 추천
 
   @override
   void initState() {
     super.initState();
-
     _loadPosts();
   }
 
   void _loadPosts() {
-    setState(() {
-      switch (_selectedTabIndex) {
-        case 0: // 전체
-          _postsFuture = PostService.getPostFeeds(
-            userId: CurrentUser.instance.member!.mId,
-          );
-          break;
-        case 1: // 인기
-          _postsFuture = PostService.getPopularPostFeeds(
-            userId: CurrentUser.instance.member!.mId,
-          );
-          break;
-        case 2: // 친구
-          _postsFuture = PostService.getPostFeeds(
-            userId: CurrentUser.instance.member!.mId,
-            style: 'friends',
-          );
-          break;
-      }
-    });
+    // 추천 탭이 아닐 때만 피드 로드
+    if (_selectedTabIndex != 3) {
+      setState(() {
+        switch (_selectedTabIndex) {
+          case 0: // 전체
+            _postsFuture = PostService.getPostFeeds(
+              userId: CurrentUser.instance.member!.mId,
+            );
+            break;
+          case 1: // 인기
+            _postsFuture = PostService.getPopularPostFeeds(
+              userId: CurrentUser.instance.member!.mId,
+            );
+            break;
+          case 2: // 친구
+            _postsFuture = PostService.getPostFeeds(
+              userId: CurrentUser.instance.member!.mId,
+              style: 'friends',
+            );
+            break;
+        }
+      });
+    }
   }
 
   Future<void> _showCreatePostDialog() async {
@@ -111,91 +114,102 @@ class _WalkingTalkScreenState extends State<WalkingTalkScreen> {
                     _buildTabButton('전체', 0),
                     _buildTabButton('인기', 1),
                     _buildTabButton('친구', 2),
+                    _buildTabButton('추천', 3), // 👈 추가
                   ],
                 ),
               ),
 
-              // 피드 영역
+              // 피드 영역 or 추천 사용자 화면
               Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () async => _loadPosts(),
-                  child: FutureBuilder<List<Post>>(
-                    future: _postsFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Text(
-                            '피드를 불러올 수 없습니다',
-                            style: TextStyle(color: current.fontPrimary),
-                          ),
-                        );
-                      }
-
-                      final posts = snapshot.data ?? [];
-
-                      if (posts.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.people_outline,
-                                size: 64.sp,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(height: 16.h),
-                              Text(
-                                '첫 게시글을 작성해보세요!',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  color: current.fontPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
-                      return ListView.builder(
-                        padding: EdgeInsets.all(16.w),
-                        itemCount: posts.length,
-                        itemBuilder: (ctx, i) => PostCard(
-                          post: posts[i],
-                          onLike: () async {
-                            final userId = CurrentUser.instance.member?.mId;
-                            if (userId != null && posts[i].pNum != null) {
-                              debugPrint(
-                                'Like: ${posts[i].pNum!}, id: $userId',
+                child: _selectedTabIndex == 3
+                    ? const RecommendedUsersScreen() // 👈 추천 탭일 때
+                    : RefreshIndicator(
+                        onRefresh: () async => _loadPosts(),
+                        child: FutureBuilder<List<Post>>(
+                          future: _postsFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
                               );
-                              await PostService.toggleLike(
-                                posts[i].pNum!,
-                                userId,
-                              );
-                              _loadPosts();
                             }
+
+                            if (snapshot.hasError) {
+                              return Center(
+                                child: Text(
+                                  '피드를 불러올 수 없습니다',
+                                  style: TextStyle(color: current.fontPrimary),
+                                ),
+                              );
+                            }
+
+                            final posts = snapshot.data ?? [];
+
+                            if (posts.isEmpty) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.people_outline,
+                                      size: 64.sp,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(height: 16.h),
+                                    Text(
+                                      '첫 게시글을 작성해보세요!',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        color: current.fontPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            return ListView.builder(
+                              padding: EdgeInsets.all(16.w),
+                              itemCount: posts.length,
+                              itemBuilder: (ctx, i) => PostCard(
+                                post: posts[i],
+                                onLike: () async {
+                                  final userId =
+                                      CurrentUser.instance.member?.mId;
+                                  if (userId != null && posts[i].pNum != null) {
+                                    debugPrint(
+                                      'Like: ${posts[i].pNum!}, id: $userId',
+                                    );
+                                    await PostService.toggleLike(
+                                      posts[i].pNum!,
+                                      userId,
+                                    );
+                                    _loadPosts();
+                                  }
+                                },
+                                onCommentChanged: _loadPosts,
+                                onPostDeleted: _loadPosts,
+                              ),
+                            );
                           },
-                          onCommentChanged: _loadPosts,
-                          onPostDeleted: _loadPosts,
                         ),
-                      );
-                    },
-                  ),
-                ),
+                      ),
               ),
             ],
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreatePostDialog,
-        backgroundColor: current.accent,
-        icon: Icon(Icons.add, color: current.bg),
-        label: Text('게시글 작성', style: TextStyle(color: current.bg)),
-      ),
+      floatingActionButton:
+          _selectedTabIndex ==
+              3 // 👈 추천 탭에선 숨김
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _showCreatePostDialog,
+              backgroundColor: current.accent,
+              icon: Icon(Icons.add, color: current.bg),
+              label: Text('게시글 작성', style: TextStyle(color: current.bg)),
+            ),
     );
   }
 

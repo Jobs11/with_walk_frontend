@@ -75,87 +75,89 @@ class _WalkingEventScreenState extends State<WalkingEventScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(43.h),
-        child: WithWalkAppbar(
-          titlename: "도전의 발자국",
-          isBack: false,
-          current: current,
-          isAdmin: isAdmin, // ✅ 관리자 여부 전달
-          onMenuPressed: () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CreateChallengeScreen(),
-              ),
-            );
+    return SafeArea(
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(43.h),
+          child: WithWalkAppbar(
+            titlename: "도전의 발자국",
+            isBack: false,
+            current: current,
+            isAdmin: isAdmin, // ✅ 관리자 여부 전달
+            onMenuPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreateChallengeScreen(),
+                ),
+              );
 
-            if (result == true) {
-              _loadData();
-            }
-          },
+              if (result == true) {
+                _loadData();
+              }
+            },
+          ),
         ),
-      ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              "assets/images/bgs/background.png",
-              fit: BoxFit.cover,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                "assets/images/bgs/background.png",
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
-          Column(
-            children: [
-              // 탭 바
-              Container(
-                margin: EdgeInsets.all(16.w),
-                decoration: BoxDecoration(
-                  color: current.bg.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(12.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+            Column(
+              children: [
+                // 탭 바
+                Container(
+                  margin: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: current.bg.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(12.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                      color: current.accent,
+                      borderRadius: BorderRadius.circular(10.r),
                     ),
-                  ],
+                    indicatorSize: TabBarIndicatorSize.tab, // 👈 이거 추가!
+                    labelColor: current.bg,
+                    unselectedLabelColor: current.fontPrimary,
+                    labelStyle: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    unselectedLabelStyle: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.normal,
+                    ),
+                    tabs: const [
+                      Tab(text: '진행중인 도전'),
+                      Tab(text: '내 도전 기록'),
+                    ],
+                  ),
                 ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicator: BoxDecoration(
-                    color: current.accent,
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab, // 👈 이거 추가!
-                  labelColor: current.bg,
-                  unselectedLabelColor: current.fontPrimary,
-                  labelStyle: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  unselectedLabelStyle: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.normal,
-                  ),
-                  tabs: const [
-                    Tab(text: '진행중인 도전'),
-                    Tab(text: '내 도전 기록'),
-                  ],
-                ),
-              ),
 
-              // 탭 뷰
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [_buildActiveChallenges(), _buildMyChallenges()],
+                // 탭 뷰
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [_buildActiveChallenges(), _buildMyChallenges()],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

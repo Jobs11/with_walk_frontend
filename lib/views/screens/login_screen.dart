@@ -143,9 +143,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget yesLogin() {
     return Column(
       children: [
-        inputdata("ID", idController, current, 200),
+        inputdata("아이디", idController, current, 200),
         SizedBox(height: 4.h),
-        inputdata("PASSWORD", passwordController, current, 200),
+        inputdata("비밀번호", passwordController, current, 200),
         SizedBox(height: 12.h),
         colorbtn('로그인', current.btn, current.btnText, current.btn, 200, 36, () {
           if (idController.text.isEmpty && passwordController.text.isEmpty) {

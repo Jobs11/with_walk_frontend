@@ -17,6 +17,7 @@ class Memberservice {
   static const String modifyProfile = "updateProfile";
   static const String check = "check";
   static const String search = "search";
+  static const String all = "all";
 
   static Future<void> registerMember(Member member) async {
     final url = Uri.parse("${Baseurl.b}$menual/$registerUser");
@@ -133,5 +134,17 @@ class Memberservice {
     if (res.statusCode != 201 && res.statusCode != 200) {
       throw Exception("Register failed: ${res.statusCode} ${res.body}");
     }
+  }
+
+  static Future<List<Member>> getAllMembers() async {
+    final url = Uri.parse('${Baseurl.b}$menual/$all');
+
+    final response = await http.get(url).timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Member.fromJson(json)).toList();
+    }
+    throw Exception('전체 회원 조회 실패: ${response.statusCode}');
   }
 }

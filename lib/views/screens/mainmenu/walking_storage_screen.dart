@@ -89,7 +89,7 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
       weeklyTotalKm = total;
     });
 
-    debugPrint('📊 이번 주 총 거리: $weeklyTotalKm km');
+    debugPrint('📊 이번 주 총 거리: $weeklyTotalKm');
   }
 
   // 주간 목표 불러오기
@@ -257,9 +257,8 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
   // 🎯 주간 목표 위젯
   Widget _buildWeeklyGoalWidget() {
     final goalKm = weeklyGoal?.wgGoalKm ?? 0.0;
-    final progress = goalKm > 0
-        ? (weeklyTotalKm / goalKm).clamp(0.0, 1.0)
-        : 0.0;
+    final currentKm = weeklyTotalKm / 1000; // 👈 m를 km로 변환
+    final progress = goalKm > 0 ? (currentKm / goalKm).clamp(0.0, 1.0) : 0.0;
     final percentage = (progress * 100).toInt();
 
     return GestureDetector(
@@ -312,7 +311,7 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
             Row(
               children: [
                 Text(
-                  weeklyTotalKm.toStringAsFixed(1),
+                  currentKm.toStringAsFixed(1), // 👈 변환된 km 사용
                   style: TextStyle(
                     fontSize: 32.sp,
                     fontWeight: FontWeight.bold,
@@ -352,9 +351,10 @@ class _WalkingStorageScreenState extends State<WalkingStorageScreen> {
             // 남은 거리
             if (goalKm > 0)
               Text(
-                weeklyTotalKm >= goalKm
+                currentKm >=
+                        goalKm // 👈 변환된 km 사용
                     ? '🎉 목표 달성!'
-                    : '남은 거리: ${(goalKm - weeklyTotalKm).toStringAsFixed(1)} km',
+                    : '남은 거리: ${(goalKm - currentKm).toStringAsFixed(1)} km', // 👈 변환된 km 사용
                 style: TextStyle(fontSize: 12.sp, color: Colors.white70),
               ),
           ],
