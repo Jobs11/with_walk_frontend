@@ -47,7 +47,11 @@ class _DistanceWidgetState extends State<DistanceWidget> {
   double? _distanceM;
 
   bool _isLoadingLocation = false;
-  bool _isPanelExpanded = true; // 👈 패널 펼침/접기 상태
+
+  // 👇 드래그 가능한 패널 높이 (0.0 ~ 1.0)
+  double _panelHeightFactor = 0.4; // 기본 40%
+  final double _minHeightFactor = 0.2; // 최소 20%
+  final double _maxHeightFactor = 0.7; // 최대 70%
 
   late final NaverLocalService _naver = NaverLocalService(
     searchClientId: NaverApi.naversearchclientid,
@@ -142,11 +146,10 @@ class _DistanceWidgetState extends State<DistanceWidget> {
       _line = null;
     }
 
-    // 👇 여기에 isWalking: true 추가!
     final route = await _naver.fetchShortestRoute(
       start: _start!,
       goal: _goal!,
-      isWalking: true, // 👈 도보 경로 사용!
+      isWalking: true,
     );
 
     if (!mounted) return;
@@ -164,7 +167,7 @@ class _DistanceWidgetState extends State<DistanceWidget> {
       id: 'sg-road-line',
       coords: route.path,
       width: 6,
-      color: Colors.green, // 👈 도보는 녹색으로 표시!
+      color: Colors.green,
     );
     if (c != null) await c.addOverlay(_line!);
 
@@ -302,9 +305,8 @@ class _DistanceWidgetState extends State<DistanceWidget> {
       ? '${(m / 1000).toStringAsFixed(2)} km'
       : '${m.toStringAsFixed(0)} m';
 
-  // 👉 예상 소요 시간 계산 (평균 보행 속도 4km/h 기준)
   String _estimateTime(double meters) {
-    final hours = meters / 4000; // 4km/h
+    final hours = meters / 4000;
     final minutes = (hours * 60).round();
     if (minutes < 1) return '1분 미만';
     return '$minutes분';
@@ -312,6 +314,9 @@ class _DistanceWidgetState extends State<DistanceWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final panelHeight = screenHeight * _panelHeightFactor;
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -336,322 +341,332 @@ class _DistanceWidgetState extends State<DistanceWidget> {
               ),
             ),
 
-            // 메인 컨텐츠
-            Column(
-              children: [
-                // 🗺️ 지도 영역 (더 크게)
-                SizedBox(
-                  width: double.infinity,
-                  height: _isPanelExpanded ? 400.h : 500.h,
-                  child: NaverMap(
-                    options: NaverMapViewOptions(
-                      initialCameraPosition: NCameraPosition(
-                        target: _seoul,
-                        zoom: 14,
-                      ),
-                      contentPadding: EdgeInsets.zero,
-                      mapType: NMapType.basic,
-                      liteModeEnable: false,
-                      indoorEnable: false,
-                      logoClickEnable: false,
-                      rotationGesturesEnable: true,
-                      scrollGesturesEnable: true,
-                      tiltGesturesEnable: true,
-                      zoomGesturesEnable: true,
-                    ),
-                    onMapReady: (c) {
-                      if (!mounted) return;
-                      _controller = c;
-                      if (!_mapReady.isCompleted) _mapReady.complete(c);
-                      _isMapReady = true;
-                      debugPrint('✅ NaverMap ready');
-                    },
-                    onMapTapped: (pt, latLng) async {
-                      if (!mounted) return;
-
-                      final focus = FocusScope.of(context);
-                      if (focus.hasPrimaryFocus) focus.unfocus();
-
-                      if (_start == null) {
-                        await _setStart(latLng);
-                        final addr = await _naver.reverseGeocodeToAddress(
-                          latLng,
-                        );
-                        if (addr != null && mounted) {
-                          setState(() => startController.text = addr);
-                        }
-                        await _flyTo(latLng);
-                      } else if (_goal == null) {
-                        await _setGoal(latLng);
-                        final addr = await _naver.reverseGeocodeToAddress(
-                          latLng,
-                        );
-                        if (addr != null && mounted) {
-                          setState(() => arriveController.text = addr);
-                        }
-                        await _flyTo(latLng);
-                      } else {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('리셋 후 다시 지정하세요.')),
-                          );
-                        }
-                      }
-                    },
+            // 🗺️ 지도 (전체 화면)
+            Positioned.fill(
+              child: NaverMap(
+                options: NaverMapViewOptions(
+                  initialCameraPosition: NCameraPosition(
+                    target: _seoul,
+                    zoom: 14,
                   ),
+                  contentPadding: EdgeInsets.zero,
+                  mapType: NMapType.basic,
+                  liteModeEnable: false,
+                  indoorEnable: false,
+                  logoClickEnable: false,
+                  rotationGesturesEnable: true,
+                  scrollGesturesEnable: true,
+                  tiltGesturesEnable: true,
+                  zoomGesturesEnable: true,
                 ),
+                onMapReady: (c) {
+                  if (!mounted) return;
+                  _controller = c;
+                  if (!_mapReady.isCompleted) _mapReady.complete(c);
+                  _isMapReady = true;
+                  debugPrint('✅ NaverMap ready');
+                },
+                onMapTapped: (pt, latLng) async {
+                  if (!mounted) return;
 
-                // 🎴 컨트롤 패널 (카드 스타일)
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: current.bg,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(24.r),
-                        topRight: Radius.circular(24.r),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 12,
-                          offset: const Offset(0, -4),
-                        ),
-                      ],
+                  final focus = FocusScope.of(context);
+                  if (focus.hasPrimaryFocus) focus.unfocus();
+
+                  if (_start == null) {
+                    await _setStart(latLng);
+                    final addr = await _naver.reverseGeocodeToAddress(latLng);
+                    if (addr != null && mounted) {
+                      setState(() => startController.text = addr);
+                    }
+                    await _flyTo(latLng);
+                  } else if (_goal == null) {
+                    await _setGoal(latLng);
+                    final addr = await _naver.reverseGeocodeToAddress(latLng);
+                    if (addr != null && mounted) {
+                      setState(() => arriveController.text = addr);
+                    }
+                    await _flyTo(latLng);
+                  } else {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('리셋 후 다시 지정하세요.')),
+                      );
+                    }
+                  }
+                },
+              ),
+            ),
+
+            // 🎴 드래그 가능한 하단 패널
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: GestureDetector(
+                onVerticalDragUpdate: (details) {
+                  setState(() {
+                    // 드래그 양에 따라 패널 높이 변경
+                    final newFactor =
+                        _panelHeightFactor - (details.delta.dy / screenHeight);
+                    _panelHeightFactor = newFactor.clamp(
+                      _minHeightFactor,
+                      _maxHeightFactor,
+                    );
+                  });
+                },
+                onVerticalDragEnd: (details) {
+                  // 속도에 따라 스냅 위치 결정
+                  final velocity = details.velocity.pixelsPerSecond.dy;
+
+                  if (velocity.abs() > 500) {
+                    // 빠르게 드래그한 경우
+                    setState(() {
+                      _panelHeightFactor = velocity < 0
+                          ? _maxHeightFactor
+                          : _minHeightFactor;
+                    });
+                  } else {
+                    // 천천히 드래그한 경우 - 가장 가까운 위치로 스냅
+                    final mid = (_minHeightFactor + _maxHeightFactor) / 2;
+                    setState(() {
+                      _panelHeightFactor = _panelHeightFactor > mid
+                          ? _maxHeightFactor
+                          : _minHeightFactor;
+                    });
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: panelHeight,
+                  decoration: BoxDecoration(
+                    color: current.bg,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(24.r),
+                      topRight: Radius.circular(24.r),
                     ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          // 패널 헤더 (접기/펴기)
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _isPanelExpanded = !_isPanelExpanded;
-                              });
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(vertical: 12.h),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: 40.w,
-                                    height: 4.h,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[300],
-                                      borderRadius: BorderRadius.circular(2.r),
-                                    ),
-                                  ),
-                                  SizedBox(height: 8.h),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        _isPanelExpanded
-                                            ? Icons.keyboard_arrow_down
-                                            : Icons.keyboard_arrow_up,
-                                        color: current.fontSecondary,
-                                      ),
-                                      SizedBox(width: 8.w),
-                                      Text(
-                                        _isPanelExpanded ? '경로 설정' : '경로 보기',
-                                        style: TextStyle(
-                                          fontSize: 16.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: current.fontThird,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 12,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // 드래그 핸들
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 40.w,
+                              height: 4.h,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(2.r),
                               ),
                             ),
-                          ),
-
-                          // 패널 내용
-                          if (_isPanelExpanded)
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 20.w),
-                              child: Column(
-                                children: [
-                                  // 출발지 카드
-                                  _buildLocationCard(
-                                    icon: Icons.my_location,
-                                    iconColor: Colors.green,
-                                    title: '출발지',
-                                    controller: startController,
-                                    hint: '출발',
-                                    showLocationBtn: true,
+                            SizedBox(height: 8.h),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  _panelHeightFactor > 0.4
+                                      ? Icons.keyboard_arrow_down
+                                      : Icons.keyboard_arrow_up,
+                                  color: current.fontSecondary,
+                                ),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  _panelHeightFactor > 0.4 ? '경로 설정' : '경로 보기',
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: current.fontThird,
                                   ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
 
-                                  SizedBox(height: 12.h),
+                      // 스크롤 가능한 내용
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.symmetric(horizontal: 20.w),
+                          child: Column(
+                            children: [
+                              // 출발지 카드
+                              _buildLocationCard(
+                                icon: Icons.my_location,
+                                iconColor: Colors.green,
+                                title: '출발지',
+                                controller: startController,
+                                hint: '출발',
+                                showLocationBtn: true,
+                              ),
 
-                                  // 도착지 카드
-                                  _buildLocationCard(
-                                    icon: Icons.location_on,
-                                    iconColor: Colors.red,
-                                    title: '도착지',
-                                    controller: arriveController,
-                                    hint: '도착',
-                                    showLocationBtn: false,
-                                  ),
+                              SizedBox(height: 12.h),
 
-                                  SizedBox(height: 16.h),
+                              // 도착지 카드
+                              _buildLocationCard(
+                                icon: Icons.location_on,
+                                iconColor: Colors.red,
+                                title: '도착지',
+                                controller: arriveController,
+                                hint: '도착',
+                                showLocationBtn: false,
+                              ),
 
-                                  // 경로 정보 카드
-                                  if (_distanceM != null)
-                                    Container(
-                                      padding: EdgeInsets.all(16.w),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            current.accent.withValues(
-                                              alpha: 0.1,
-                                            ),
-                                            current.accent.withValues(
-                                              alpha: 0.05,
-                                            ),
-                                          ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(
-                                          16.r,
-                                        ),
-                                        border: Border.all(
-                                          color: current.accent.withValues(
-                                            alpha: 0.3,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceAround,
-                                        children: [
-                                          _buildInfoColumn(
-                                            icon: Icons.straighten,
-                                            label: '예상 거리',
-                                            value: _fmtMeters(_distanceM!),
-                                          ),
-                                          Container(
-                                            width: 1,
-                                            height: 40.h,
-                                            color: current.accent.withValues(
-                                              alpha: 0.2,
-                                            ),
-                                          ),
-                                          _buildInfoColumn(
-                                            icon: Icons.access_time,
-                                            label: '예상 시간',
-                                            value: _estimateTime(_distanceM!),
-                                          ),
-                                        ],
+                              SizedBox(height: 16.h),
+
+                              // 경로 정보 카드
+                              if (_distanceM != null)
+                                Container(
+                                  padding: EdgeInsets.all(16.w),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        current.accent.withValues(alpha: 0.1),
+                                        current.accent.withValues(alpha: 0.05),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(16.r),
+                                    border: Border.all(
+                                      color: current.accent.withValues(
+                                        alpha: 0.3,
                                       ),
                                     ),
-
-                                  SizedBox(height: 20.h),
-
-                                  // 버튼들
-                                  Row(
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
                                     children: [
-                                      Expanded(
-                                        child: OutlinedButton.icon(
-                                          onPressed: _resetMarks,
-                                          icon: const Icon(Icons.refresh),
-                                          label: const Text('초기화'),
-                                          style: OutlinedButton.styleFrom(
-                                            foregroundColor: current.accent,
-                                            side: BorderSide(
-                                              color: current.accent,
-                                            ),
-                                            padding: EdgeInsets.symmetric(
-                                              vertical: 14.h,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12.r),
-                                            ),
-                                          ),
+                                      _buildInfoColumn(
+                                        icon: Icons.straighten,
+                                        label: '예상 거리',
+                                        value: _fmtMeters(_distanceM!),
+                                      ),
+                                      Container(
+                                        width: 1,
+                                        height: 40.h,
+                                        color: current.accent.withValues(
+                                          alpha: 0.2,
                                         ),
                                       ),
-                                      SizedBox(width: 12.w),
-                                      Expanded(
-                                        child: ElevatedButton.icon(
-                                          onPressed: _distanceM == null
-                                              ? _makeRoadRoute
-                                              : null,
-                                          icon: const Icon(Icons.route),
-                                          label: const Text('경로 보기'),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: current.accent,
-                                            foregroundColor: Colors.white,
-                                            padding: EdgeInsets.symmetric(
-                                              vertical: 14.h,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12.r),
-                                            ),
-                                          ),
-                                        ),
+                                      _buildInfoColumn(
+                                        icon: Icons.access_time,
+                                        label: '예상 시간',
+                                        value: _estimateTime(_distanceM!),
                                       ),
                                     ],
                                   ),
+                                ),
 
-                                  SizedBox(height: 12.h),
+                              SizedBox(height: 20.h),
 
-                                  // 걷기 시작 버튼
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: ElevatedButton.icon(
-                                      onPressed: _goal == null
-                                          ? null
-                                          : () {
-                                              if (widget.onStartWalk != null) {
-                                                widget.onStartWalk!(
-                                                  start: _start,
-                                                  goal: _goal,
-                                                  startAddr:
-                                                      startController.text,
-                                                  goalAddr:
-                                                      arriveController.text,
-                                                );
-                                              }
-                                            },
-                                      icon: const Icon(
-                                        Icons.directions_walk,
-                                        size: 24,
-                                      ),
-                                      label: Text(
-                                        '걷기 시작하기',
-                                        style: TextStyle(
-                                          fontSize: 16.sp,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.green,
-                                        foregroundColor: Colors.white,
+                              // 버튼들
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: _resetMarks,
+                                      icon: const Icon(Icons.refresh),
+                                      label: const Text('초기화'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: current.accent,
+                                        side: BorderSide(color: current.accent),
                                         padding: EdgeInsets.symmetric(
-                                          vertical: 16.h,
+                                          vertical: 14.h,
                                         ),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
                                             12.r,
                                           ),
                                         ),
-                                        disabledBackgroundColor: Colors.grey
-                                            .withValues(alpha: 0.3),
                                       ),
                                     ),
                                   ),
-
-                                  SizedBox(height: 20.h),
+                                  SizedBox(width: 12.w),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: _distanceM == null
+                                          ? _makeRoadRoute
+                                          : null,
+                                      icon: const Icon(Icons.route),
+                                      label: const Text('경로 보기'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: current.accent,
+                                        foregroundColor: Colors.white,
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 14.h,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12.r,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
-                            ),
-                        ],
+
+                              SizedBox(height: 12.h),
+
+                              // 걷기 시작 버튼
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _goal == null
+                                      ? null
+                                      : () {
+                                          if (widget.onStartWalk != null) {
+                                            widget.onStartWalk!(
+                                              start: _start,
+                                              goal: _goal,
+                                              startAddr: startController.text,
+                                              goalAddr: arriveController.text,
+                                            );
+                                          }
+                                        },
+                                  icon: const Icon(
+                                    Icons.directions_walk,
+                                    size: 24,
+                                  ),
+                                  label: Text(
+                                    '걷기 시작하기',
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 16.h,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                    disabledBackgroundColor: Colors.grey
+                                        .withValues(alpha: 0.3),
+                                  ),
+                                ),
+                              ),
+
+                              SizedBox(height: 20.h),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ],
         ),
@@ -788,7 +803,6 @@ class _DistanceWidgetState extends State<DistanceWidget> {
     );
   }
 
-  /// ✅ 주소 직접 입력 + 장소 검색 통합 필드
   Widget _addressInputField(String hint, TextEditingController ctrl) {
     return Container(
       height: 44.h,
